@@ -52,3 +52,9 @@ Transfer the selected lines of the selected columns of a ListView to a collectio
 
 ObjCSV_SortCollection(objCollection, strSortFields [, strSortOptions = "", blnProgress = 0])
 Sort the objectfs of a collection using one or multiple fields as sorting key.  Internal AHK Sort options are supported.
+
+DISCUSSION AND TUTORIAL
+
+A discussion on this library and a tutorial can be found on the AutoHotkey forum:
+http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/
+http://www.autohotkey.com/board/topic/96619-objcsv-library-tutorial-basic/
