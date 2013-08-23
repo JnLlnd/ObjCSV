@@ -1,17 +1,18 @@
 ;===============================================
 /* ObjCSV Library v0.1
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
-By jlalonde on AHK forum
+By JnLlnd on AHK forum
 2013-08-22+
 Released under GNU GENERAL PUBLIC LICENSE (Version 2, June 1991)
 */
 
 ;================================================
 /*INSTRUCTIONS
-Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders
+Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:
   %A_ScriptDir%\Lib\
   %A_MyDocuments%\AutoHotkey\Lib\
-  path-to-the-currently-running-AutoHotkey.exe\Lib\
+  [path to the currently running AutoHotkey_L.exe]\Lib\ (AutoHotKey_L can be downloaded here: http://l.autohotkey.net/ )
+
 You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 ================================================
 */
