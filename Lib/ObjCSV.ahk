@@ -217,8 +217,8 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 			{
 				strValue := objCollection[intLineNumber][Trim(strFieldName)]
 				if (StrLen(strEolReplacement)) ; if whenever we have multiline field names we handle it!
-					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All
-				strRecord := strRecord . strValue . strFieldDelimiter
+					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
+				strRecord := strRecord . Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
 			}
 		}
 		else ;  we put all fields in the record (we assume the order of fields is the same for each object)
@@ -227,7 +227,7 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 				strValue := Format4CSV(strValue, strFieldDelimiter, strEncapsulator)
 				if (StrLen(strEolReplacement))
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
-				strRecord := strRecord . strValue . strFieldDelimiter
+				strRecord := strRecord . Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
 			}
 		StringTrimRight, strRecord, strRecord, 1 ; remove extra field delimiter
 		strData := strData . strRecord . strEndOfLine
