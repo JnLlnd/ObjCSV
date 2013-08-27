@@ -3,7 +3,6 @@
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 2013-08-22+
-Released under GNU GENERAL PUBLIC LICENSE (Version 2, June 1991)
 */
 
 ;================================================
@@ -24,7 +23,7 @@ Files can be read and saved in any delimited format (CSV, semi-colon, tab delimi
 Collections can also be displayed, edited and read in GUI ListView objects.
 For more info on CSV files, see http://en.wikipedia.org/wiki/Comma-separated_values.
 
-ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = true, blnMultiline = 1, intProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r"])
+ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = true, blnMultiline = 1, blnProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r"])
 Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNames parameter. Delimiters are configurable.
 
 ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
@@ -45,7 +44,7 @@ See details for each fucntions below.
 */
 
 ;================================================
-ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := true, blnMultiline := 1, intProgress := 0, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r")
+ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := true, blnMultiline := 1, blnProgress := 0, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r")
 /*
 Summary: Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by the ByRef variable strFieldNames. Delimiters are configurable.
 
@@ -67,8 +66,8 @@ Optional. If true (or 1), the objects key names are taken from the header of the
 blnMultiline := 1
 Optional. If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details).
 
-intProgress := 0
-Optional. If 0, progress bar is is NOT shown. If greater than 0, a progress bar is displayed with intProgress as the maximum progress value. Should be use only for very large files. By default 0. NOTE-1: Because there is no way for the script to know in advance the number of lines in the file, provide the exact number (if known) or an approximative number of lines. NOTE-2: If true (or 1), a progress bar is shown already filled while the processing occurs.
+blnProgress := 0
+Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
 
 strFieldDelimiter := ","
 Optional. Field delimiter in the CSV file. One character, usually comma (default value) or tab. According to locale setting of software (e.g. MS Office) or user preferences, delimiter can be semi-colon (;), pipe (|), space, etc. NOTE-1: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters. NOTE-2: Using the Trim function, %A_Space% and %A_Tab% (when tab is not a delimiter) are removed from the beginning and end of all field names and data.
@@ -87,14 +86,19 @@ Optional. List of characters (case sensitive) to exclude from beginning and end 
 	objHeader := Object() ; holds the keys (fields name) of the objects in the collection
 	FileRead, strData, %strFilePath%
 	if blnMultiline
-		chrEolReplacement := Prepare4Multilines(strData, strEncapsulator, intProgress) ; make sure each record temporarily stands on a single line *** not tested on files with eol other than `n
+		chrEolReplacement := Prepare4Multilines(strData, strEncapsulator, blnProgress) ; make sure each record temporarily stands on a single line *** not tested on files with eol other than `n
 	strData := Trim(strData, strRecordDelimiter) ; remove empty line (record) at the beginning or end of the string, if present
-	if (intProgress)
-		Progress, R0-%intProgress% FS8 A, Loading CSV data..., , , MS Sans Serif
+	if (blnProgress)
+	{
+		intMaxProgress := StrLen(strData)
+		intProgress := 0
+		Progress, R0-%intMaxProgress% FS8 A, Loading CSV data..., , , MS Sans Serif
+	}
 	Loop, Parse, strData, %strRecordDelimiter%, %strOmitChars% ; read each line (record) of the CSV file
 	{
-		if (intProgress) and !Mod(%A_index%, 5000)
-			Progress, %A_index%
+		intProgress := intProgress + StrLen(A_LoopField) + 2 ; for Progress bar, augment intProgress of len of line + 2 for cr-lf 
+		if (blnProgress AND !Mod(intProgress, 5000))
+			Progress, %intProgress% ;  update progress bar only every 5000 chars
 		if (A_Index = 1) and (blnHeader) ; we have an header to read
 		{
 			objHeader := ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator) ; returns an object array from the first line of the delimited-separated-value file
@@ -117,7 +121,7 @@ Optional. List of characters (case sensitive) to exclude from beginning and end 
 			StringTrimRight, strFieldNames, strFieldNames, 1 ; remove extra field delimiter
 			if !(objHeader.MaxIndex()) ; we don't have an object, something went wrong
 			{
-				if (intProgress)
+				if (blnProgress)
 					Progress, Off
 				return ; returns no object(more error friendly code could be added here)
 			}
@@ -142,7 +146,7 @@ Optional. List of characters (case sensitive) to exclude from beginning and end 
 		}
 	}
 	objCollection.SetCapacity(0) ; reallocates the object's internal array to fit only its current content
-	if (intProgress)
+	if (intMaxProgress)
 		Progress, Off
 	objHeader := ; release object
 	return objCollection

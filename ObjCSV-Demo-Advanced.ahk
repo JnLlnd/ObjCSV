@@ -3,7 +3,6 @@
 Written using AutoHotkey_L v1.1.09.03 (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 2013-08-22+
-Released under GNU GENERAL PUBLIC LICENSE (Version 2, June 1991)
 */
 
 #NoEnv

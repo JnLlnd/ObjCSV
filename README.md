@@ -4,7 +4,6 @@ ObjCSV Library v0.1
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 2013-08-22+
-Released under GNU GENERAL PUBLIC LICENSE (Version 2, June 1991)
 
 A set of AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type. Files can be read and saved in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.). Collections can also be displayed, edited and read in Gui ListView objects. For more info on CSV files, see http://en.wikipedia.org/wiki/Comma-separated_values.
 
