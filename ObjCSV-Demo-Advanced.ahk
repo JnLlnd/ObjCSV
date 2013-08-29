@@ -5,10 +5,24 @@ By JnLlnd on AHK forum
 2013-08-22+
 */
 
+/*
+Make sure that the libray ObjCSV.ahk in copied in one of these folders:
+  %A_ScriptDir%\Lib\
+  %A_MyDocuments%\AutoHotkey\Lib\
+  path-to-the-currently-running-AutoHotkey.exe\Lib\
+
+The ObjCSV.ahk library can be downloaded here:
+https://raw.github.com/JnLlnd/ObjCSV/master/Lib/ObjCSV.ahk
+
+Also, download a copy of the CSV file "TheBeatles.txt" and save it in the script directory:
+https://raw.github.com/JnLlnd/ObjCSV/master/TheBeatles.txt
+*/
+
 #NoEnv
 #SingleInstance
-#Include <JLDev>
 
+
+; Gui creation
 Gui, One:New, +Resize, One
 Gui, One:Default
 Gui, Add, Button, x10 Default gButtonLoadFileOneA, Load #1A
