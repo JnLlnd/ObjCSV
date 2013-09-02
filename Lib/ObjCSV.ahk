@@ -27,7 +27,10 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = true, blnM
 Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNames parameter. Delimiters are configurable.
 
 ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
-Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are included or not in the CSV file. Delimiters are configurable.
+Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionnaly included in the CSV file. Delimiters are configurable.
+
+ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
+Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included in the file. Delimiters are configurable. Width are determined by the delimited string strWidth.
 
 ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", blnProgress = "0"])
 Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView.
@@ -42,6 +45,8 @@ See details for each fucntions below.
 
 ===============================================
 */
+
+
 
 ;================================================
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := true, blnMultiline := 1, blnProgress := 0, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r")
@@ -201,7 +206,7 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 		Progress, R0-%intMax% FS8 A, Saving data to CSV file..., , , MS Sans Serif
 	if (blnHeader) ; put the field names (header) in the first line of the CSV file
 	{
-		if !StrLen(strFieldOrder) ; we dont have a header, so we take field names from the first record, in their natural order 
+		if !StrLen(strFieldOrder) ; we dont have a header, so we take field names from the first record of objCollection, in their natural order 
 		{
 			for strFieldName, strValue in objCollection[1]
 				strFieldOrder := strFieldOrder . Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
@@ -220,12 +225,12 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated field names
 			{
 				strValue := objCollection[intLineNumber][Trim(strFieldName)]
-				if (StrLen(strEolReplacement)) ; if whenever we have multiline field names we handle it!
+				if (StrLen(strEolReplacement)) ; multiline field eol replacement
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
 				strRecord := strRecord . Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
 			}
 		}
-		else ;  we put all fields in the record (we assume the order of fields is the same for each object)
+		else ;  we put all fields in the record (I assume the order of fields is the same for each object)
 			for strFieldName, strValue in objCollection[A_Index]
 			{
 				strValue := Format4CSV(strValue, strFieldDelimiter, strEncapsulator)
@@ -244,6 +249,128 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 	return
 }
 ;================================================
+
+
+
+;================================================
+ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", blnProgress := 0, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n", strEolReplacement := "")
+/*
+Summary: Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Data fields shorter than their width are padded with spaces. Data fields longer than their width are trucated at the maximal width.
+
+RETURNED VALUE:
+None.
+
+PARAMETERS:
+
+objCollection
+Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
+
+strFilePath
+The name of the CSV file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
+
+strWidth
+Width for each field. Each numeric values must be in the same order as strFieldOrder and separated by the strFieldDelimiter character.
+
+blnHeader := 0
+Optional. If true, the field names in the collection objects are inserted as header of the file, padded or truncated according to the width for each field. NOTE: If field names are longer than their fixed-width they will be truncated as well.
+
+strFieldOrder := ""
+Optional. List of field to include in the file and the order of these fields in the file. Fields names must be separated by the strFieldDelimiter character and, if required, encapsulated by the strEncapsulator character. If empty, all fields are included. Empty by default.
+
+blnProgress := 0
+Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+
+blnOverwrite := 0
+Optional. If true (or 1), overwrite existing files. If false (or 0), content is appended to the existing file. False (or 0) by default. NOTE: If content is appended to an existing file, fields names and order should be the same as in the existing file.
+
+strFieldDelimiter := ","
+Optional. Delimiter inserted between fields names in the strFieldOrder parameter and fields width in the strWidth parameter. This delimiter is NOT used in the file data. One character, usually comma, tab or semi-colon. You can choose other delimiters like pipe (|), space, etc. Comma by default. NOTE: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters.
+
+strEncapsulator := """"
+Optional. One character (usualy double-quote) inserted in the strFieldOrder parameter to embed field names that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: "one ""quoted"" word". Double-quote by default. This delimiter is NOT used in the file data.
+
+strEndOfLine := "`r`n"
+Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
+
+strEolReplacement := ""
+Optional. A fixed-width file should not include end-of-line within data. If it does and it a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
+*/
+{
+	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter% ; arrIntWidth is a pseudo-array, so %arrIntWidth1% or  arrIntWidth%intColIndex%
+	strData := ""
+	intMax := objCollection.MaxIndex()
+	if (blnProgress)
+		Progress, R0-%intMax% FS8 A, Saving data to CSV file..., , , MS Sans Serif
+	if (blnHeader) ; put the field names (header) in the first line of the file
+	{
+		if StrLen(strFieldOrder) ; convert DSV string to fixed-width
+		{
+			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated field names
+			{
+				; ###_D("strFieldName: " . strFieldName . "`nintColIndex:" . intColIndex)
+				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%)
+				; ###_D("arrIntWidth%intColIndex%: " . arrIntWidth%intColIndex% . "`nstrHeaderFixed: " . strHeaderFixed . "`nStrLen(strHeaderFixed):" . StrLen(strHeaderFixed))
+			}
+			; ###_D("HEADER FIX AVEC strFieldOrder / strHeaderFixed:`n" . strHeaderFixed, 1)
+		}
+		else ; we dont have a header, so we take field names from the first record of objCollection, in their natural order 
+		{
+			intColIndex := 1
+			for strFieldName, strValue in objCollection[1]
+			{
+				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%)
+				intColIndex := intColIndex + 1
+			}
+			; ###_D("HEADER FIX PAS DE strFieldOrder / strHeaderFixed:`n" . strHeaderFixed, 1)
+		}
+		strData := strHeaderFixed . strEndOfLine ; put this header as first line of the file
+	}
+	Loop, %intMax% ; for each record in the collection
+	{
+		strRecord := "" ; line to add to the file
+		if (blnProgress) and !Mod(%A_index%, 5000)
+			Progress, %A_index%
+		if StrLen(strFieldOrder) ;  we put only these fields, in this order
+		{
+			; ###_D("DATA AVEC strFieldOrder", 1)
+			intLineNumber := A_Index
+			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated field names
+			{
+				strValue := objCollection[intLineNumber][Trim(strFieldName)]
+				; ###_D("strFieldName: " . strFieldName . "`nstrValue: " . strValue . "`nintColIndex:" . intColIndex)
+				if (StrLen(strEolReplacement)) ; multiline field eol replacement
+					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
+				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
+				; ###_D("arrIntWidth%intColIndex%: " . arrIntWidth%intColIndex% . "`nstrRecord: " . strRecord . "`nStrLen(strRecord):" . StrLen(strRecord))
+			}
+		}
+		else ;  we put all fields in the record (I assume the order of fields is the same for each object)
+		{
+			; ###_D("DATA SANS strFieldOrder", 1)
+			intColIndex := 1
+			for strFieldName, strValue in objCollection[A_Index]
+			{
+				; ###_D("strFieldName: " . strFieldName . "`nstrValue: " . strValue . "`nintColIndex:" . intColIndex)
+				if (StrLen(strEolReplacement))
+					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
+				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
+				; ###_D("arrIntWidth%intColIndex%: " . arrIntWidth%intColIndex% . "`nstrRecord: " . strRecord . "`nStrLen(strRecord):" . StrLen(strRecord))
+				intColIndex := intColIndex + 1
+			}
+		}
+		strData := strData . strRecord . strEndOfLine
+		; ###_D("strData:`n" . strData, 1)
+	}
+RETURN ; ####
+	if (blnOverwrite)
+		FileDelete, %strFilePath%
+	FileAppend, %strData%, %strFilePath%
+	if (blnProgress)
+		Progress, Off
+	return
+}
+;================================================
+
 
 
 ;================================================
@@ -552,6 +679,7 @@ CALL-FOR-HELP!
 }
 
 
+
 GetFirstUnusedAsciiCode(strData, intAscii := 161)
 /*
 Summary: Returns the ASCII code of the first character absent from the strData string, starting at ASCII code intAscii. By default, ¡ (inverted exclamation mark ASCII 161) or the next available character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.
@@ -564,6 +692,16 @@ Summary: Returns the ASCII code of the first character absent from the strData s
 			break
 	return intAscii
 }
+
+
+
+MakeFixedWidth(strFixed, intWidth)
+{
+	while StrLen(strFixed) < intWidth
+		strFixed := strFixed . " "
+	return SubStr(strFixed, 1, intWidth)
+}
+
 
 
 Format4CSV(F4C_String, strFieldDelimiter := ",", strEncapsulator := """")
