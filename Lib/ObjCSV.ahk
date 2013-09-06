@@ -23,7 +23,7 @@ Files can be read and saved in any delimited format (CSV, semi-colon, tab delimi
 Collections can also be displayed, edited and read in GUI ListView objects.
 For more info on CSV files, see http://en.wikipedia.org/wiki/Comma-separated_values.
 
-ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = true, blnMultiline = 1, blnProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r"])
+ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, blnProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r"])
 Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNames parameter. Delimiters are configurable.
 
 ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
@@ -32,10 +32,10 @@ Transfer the selected fields from a collection of objects to a CSV file. Field n
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
 Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included in the file. Delimiters are configurable. Width are determined by the delimited string strWidth.
 
-ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", blnProgress = "0"])
+ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", blnProgress = 0])
 Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView.
 
-ObjCSV_ListView2Collection([strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", blnProgress = "0"])
+ObjCSV_ListView2Collection([strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", blnProgress = 0])
 Transfer the selected lines of the selected columns of a ListView to a collection of objects. Lines are transfered in the order they appear in the ListView. Column headers are used as objects keys.
 
 ObjCSV_SortCollection(objCollection, strSortFields [, strSortOptions = "", blnProgress = 0])
@@ -49,7 +49,7 @@ See details for each fucntions below.
 
 
 ;================================================
-ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := true, blnMultiline := 1, blnProgress := 0, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r")
+ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, blnProgress := 0, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r")
 /*
 Summary: Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by the ByRef variable strFieldNames. Delimiters are configurable.
 
@@ -65,8 +65,8 @@ ByRef strFieldNames
 Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, column numbers are used as object keys, starting at 1. Empty by default.
 Output: See RETURNED VALUES above.
 
-blnHeader := true
-Optional. If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True by default.
+blnHeader := 1
+Optional. If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True (or 1) by default.
 
 blnMultiline := 1
 Optional. If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details).
@@ -300,9 +300,10 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 	strData := ""
 	intMax := objCollection.MaxIndex()
 	if (blnProgress)
-		Progress, R0-%intMax% FS8 A, Saving data to CSV file..., , , MS Sans Serif
+		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
 	if (blnHeader) ; put the field names (header) in the first line of the file
 	{
+		strHeaderFixed := ""
 		if StrLen(strFieldOrder) ; convert DSV string to fixed-width
 		{
 			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated field names
@@ -324,6 +325,7 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 			; ###_D("HEADER FIX PAS DE strFieldOrder / strHeaderFixed:`n" . strHeaderFixed, 1)
 		}
 		strData := strHeaderFixed . strEndOfLine ; put this header as first line of the file
+		; ###_D("AVEC HEADER strData:`n" . strData, 1)
 	}
 	Loop, %intMax% ; for each record in the collection
 	{
@@ -346,7 +348,7 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 		}
 		else ;  we put all fields in the record (I assume the order of fields is the same for each object)
 		{
-			; ###_D("DATA SANS strFieldOrder", 1)
+			; ###_D("DATA SANS strFieldOrder")
 			intColIndex := 1
 			for strFieldName, strValue in objCollection[A_Index]
 			{
@@ -361,7 +363,6 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 		strData := strData . strRecord . strEndOfLine
 		; ###_D("strData:`n" . strData, 1)
 	}
-RETURN ; ####
 	if (blnOverwrite)
 		FileDelete, %strFilePath%
 	FileAppend, %strData%, %strFilePath%
@@ -374,7 +375,7 @@ RETURN ; ####
 
 
 ;================================================
-ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", strFieldOrder := "", strFieldDelimiter := ",", strEncapsulator := """", strSortFields := "", strSortOptions := "", blnProgress := "0")
+ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", strFieldOrder := "", strFieldDelimiter := ",", strEncapsulator := """", strSortFields := "", strSortOptions := "", blnProgress := 0)
 /*
 Summary: Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView. NOTE-1: Due to an AHK limitation, files with more that 200 fields will not be transfered to a ListView. NOTE-2: Although any length of text can be stored in each cell of a ListView, only the first 260 characters are displayed (no lost data).
 
@@ -407,7 +408,7 @@ Optional. Field(s) value(s) used to sort the collection before its insertion in 
 strSortOptions := ""
 Optional. Sorting options to apply to the sort command above. A string of zero or more of the option letters (in any order, with optional spaces in between). Most frequently used are R (reverse order) and N (numeric sort). All AHK_L sort options are supported. See http://l.autohotkey.net/docs/commands/Sort.htm for more options. Empty by default.
 
-blnProgress := "0"
+blnProgress := 0
 Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
 */
 {
@@ -466,7 +467,7 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 
 
 ;================================================
-ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder := "", strFieldDelimiter := ",", strEncapsulator := """", blnProgress := "0")
+ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder := "", strFieldDelimiter := ",", strEncapsulator := """", blnProgress := 0)
 /*
 Summary: Transfer the selected lines of the selected columns of a ListView to a collection of objects. Lines are transfered in the order they appear in the ListView. Column headers are used as objects keys.
 
@@ -489,7 +490,7 @@ Optional. Delimiter of the fields in the strFieldOrder parameter. One character,
 strEncapsulator := """"
 Optional. One character (usualy double-quote) possibly used in the in the strFieldOrder string to embed fields data or field names that would include special characters (as described above).
 
-blnProgress := "0"
+blnProgress := 0
 Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
 */
 {
@@ -559,7 +560,7 @@ Name(s) of the field(s) to use as sort criteria. To sort on more than one field,
 strSortOptions := ""
 Optional. Sorting options to apply to the sort command. A string of zero or more of the option letters (in any order, with optional spaces in between). Most frequently used are R (reverse order) and N (numeric sort). All AHK_L sort options are supported. See http://l.autohotkey.net/docs/commands/Sort.htm for more options. Empty by default.
 
-blnProgress := "0"
+blnProgress := 0
 Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
 */
 {
