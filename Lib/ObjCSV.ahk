@@ -255,7 +255,7 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 ;================================================
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", blnProgress := 0, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n", strEolReplacement := "")
 /*
-Summary: Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Data fields shorter than their width are padded with spaces. Data fields longer than their width are trucated at the maximal width.
+Summary: Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with spaces. Field names and data fields longer than their width are truncated at their maximal width.
 
 RETURNED VALUE:
 None.
@@ -296,7 +296,7 @@ strEolReplacement := ""
 Optional. A fixed-width file should not include end-of-line within data. If it does and it a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
 */
 {
-	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter% ; arrIntWidth is a pseudo-array, so %arrIntWidth1% or  arrIntWidth%intColIndex%
+	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter% ; arrIntWidth is a pseudo-array, so %arrIntWidth1% or arrIntWidth%intColIndex%
 	strData := ""
 	intMax := objCollection.MaxIndex()
 	if (blnProgress)
@@ -332,7 +332,7 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 		strRecord := "" ; line to add to the file
 		if (blnProgress) and !Mod(%A_index%, 5000)
 			Progress, %A_index%
-		if StrLen(strFieldOrder) ;  we put only these fields, in this order
+		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
 			; ###_D("DATA AVEC strFieldOrder", 1)
 			intLineNumber := A_Index
