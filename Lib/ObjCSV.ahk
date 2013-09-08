@@ -2,7 +2,7 @@
 /* ObjCSV Library v0.1.2
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
-2013-08-26
+2013-09-08
 */
 
 ;================================================
@@ -23,7 +23,7 @@ Files can be read and saved in any delimited format (CSV, semi-colon, tab delimi
 Collections can also be displayed, edited and read in GUI ListView objects.
 For more info on CSV files, see http://en.wikipedia.org/wiki/Comma-separated_values.
 
-ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, blnProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r"])
+ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, blnProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r", strEolReplacement = ""])
 Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNames parameter. Delimiters are configurable.
 
 ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
@@ -44,7 +44,7 @@ See details for each fucntions below.
 */
 
 ;================================================
-ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, blnProgress := 0, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r")
+ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, blnProgress := 0, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r", strEolReplacement := "")
 /*
 Summary: Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by the ByRef variable strFieldNames. Delimiters are configurable.
 
@@ -64,7 +64,7 @@ blnHeader := 1
 Optional. If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True by default.
 
 blnMultiline := 1
-Optional. If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details).
+Optional. If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE-1: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details). NOTE-2: If blnMultiline is True, you can use the strEolReplacement parameter to specify a character (or string) that will be converted to line-breaks if found in the CSV file.
 
 blnProgress := 0
 Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
@@ -80,6 +80,9 @@ Optional. Record delimiter in the CSV file. Rarely modified. Default value is en
 
 strOmitChars := "`r"
 Optional. List of characters (case sensitive) to exclude from beginning and end of lines. By default `r (carriage return) to support text files with both `r`n (carriage return+linefeed) and `n (linefeed) end-of-lines.
+
+strEolReplacement := ""
+Optional. Character (or string) that will be converted to line-breaks if found in the CSV file. Replacements occur only when blnMultiline is True. Empty by default.
 */
 {
 	objCollection := Object() ; object that will be returned by the function (a collection or array of objects)
@@ -136,7 +139,13 @@ Optional. List of characters (case sensitive) to exclude from beginning and end 
 			for intIndex, strFieldData in ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator) ; returns an object array from each line of the delimited-separated-value file
 			{
 				if blnMultiline
-					StringReplace, strFieldData, strFieldData, %chrEolReplacement%, %strRecordDelimiter%, 1 ; put back the original end-of-line chararcher in each field, if present
+				{
+					StringReplace, strFieldData, strFieldData, %chrEolReplacement%, %strRecordDelimiter%, 1 ; put back all original end-of-line chararchers in each field, if present
+					; Using %strRecordDelimiter% as replacement in the next command, eol are lost when saved using ObjCSV_Collection2CSV and opened in Notepad.
+					; However, %strRecordDelimiter% seems to work well in the previous command... Anyway, for safety (at least in the Windows environment), I replaced it with `r`n in the next command.
+					; For reference, see http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/ and http://peterbenjamin.com/seminars/crossplatform/texteol.html
+					StringReplace, strFieldData, strFieldData, %strEolReplacement%, `r`n, 1 ; replace all user-supplied replacement character with end-of-line, if present
+				}
 				if StrLen(objHeader[A_Index])
 					objData[objHeader[A_Index]] := strFieldData ; we have field names in objHeader[A_Index]
 				else
@@ -192,7 +201,7 @@ strEndOfLine := "`r`n"
 Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
 
 strEolReplacement := ""
-Optional. When empty, multi-line fields are saved unchanged. If not empty, end-of-line in multi-line fields are replaced by the string strEolReplacement. Empty by default. NOTE: Strings including replaced end-of-line will still be encapsulated with the strEncapsulator character.
+Optional. When empty, multi-line fields are saved unchanged. If not empty, end-of-line in multi-line fields are replaced by the character or string strEolReplacement. Empty by default. NOTE: Strings including replaced end-of-line will still be encapsulated with the strEncapsulator character.
 */
 {
 	strData := ""
@@ -522,7 +531,7 @@ If true (or 1), a progress bar is displayed. Default false (or 0).
 
 CALL-FOR-HELP!
 #1 This function uses a very rudimentary algorithm to do the replacements only when the end-of-line charaters are enclosed between double-quotes. I'm confident my code is safe. But there is certainly a more efficient way to accomplish this: RegEx command or another approach? Any help appreciated here :-)
-#2 Need help to test it / make this work with ASCII files with end-of-line character other than `n (works well on DOS files, need to be tested on Unix or Mac text files -  see http://peterbenjamin.com/seminars/crossplatform/texteol.html)
+#2 Need help to test it / make sure this work with ASCII files with end-of-line character other than `n (works well on DOS files, need to be tested on Unix or Mac text files -  see http://peterbenjamin.com/seminars/crossplatform/texteol.html)
 
 */
 {
