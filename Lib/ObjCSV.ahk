@@ -1,5 +1,5 @@
 ;===============================================
-/*ObjCSV Library v0.2.1 (pull strEolReplacement on load from v0.1.3)
+/* ObjCSV Library v0.2.2
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 2013-09-08
@@ -29,8 +29,11 @@ Transfer the content of a CSV file to a collection of objects. Field names are t
 ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
 Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionnaly included in the CSV file. Delimiters are configurable.
 
-ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
+ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
 Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included in the file. Delimiters are configurable. Width are determined by the delimited string strWidth.
+
+ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, blnProgress = 0, blnOverwrite = 0)
+Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
 
 ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", blnProgress = 0])
 Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView.
@@ -385,6 +388,91 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 
 
 ;================================================
+ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateEncapsulator := "~", blnProgress := 0, blnOverwrite := 0)
+/*
+Summary: Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
+
+RETURNED VALUE:
+None.
+
+PARAMETERS:
+
+objCollection
+Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
+
+strFilePath
+The name of the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. This string can be inserted in the HTML template as described below.
+
+strTemplateFile
+The name of the HTML template file used to create the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. In the template, markups and variables are encapsulated by the strTemplateEncapsulator (single charater of your choice). Markups and variables are not case sensitive unless StringCaseSense has been turned on. The template is divided in three sections: the header template (from the start of the file to the start of the row template), the row template (delimited by the markups ROWS and /ROWS) and the footer template (from the end of the row template to the end of the file). The row template is repeated in the output file for each record in the collection with field names encapsulated by the strTemplateEncapsulator are replaced by the matching data in each record.  Additionally, in the header and footer, the following variables are replaced by parts of the parameter strFilePath: FILENAME (file name without its path, but including its extension), DIR (directory of the file, final backslash excluded, but drive letter or share name included, if present), EXTENSION (file's extension), NAMENOEXT (file name without its path, dot and extension) and DRIVE (drive letter or server name, if present). Finally, in the row template, ROWNUMBER will be replaced by the current row number. This simple example, where each record has two fields named "Field1" and "Field2" and the strTemplateEncapsulator is ~ (tilde), shows the use of the various markups and variables:
+		<HEAD>
+		<TITLE>~NAMENOEXT~</TITLE>
+		</HEAD>
+		<BODY>
+		<H1>~FILENAME~</H1>
+		<TABLE>
+		<TR>
+		<TH>Row #</TH><TH>Field One</TH><TH>Field Two</TH>
+		</TR>
+		~ROWS~
+		<TR>
+		<TD>~ROWNUMBER~</TD><TD>~Field1~</TD><TD>~Field2~</TD>
+		</TR>
+		~/ROWS~
+		</TABLE>
+		Source: ~DIR~\~FILENAME~
+		</BODY>
+
+strTemplateEncapsulator := "~"
+Optional. One character used to encapsulate markups and variable names in the template. By default ~ (tilde).
+
+blnProgress := 0
+Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+
+blnOverwrite := 0
+Optional. If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function returns without writing the output file. False (or 0) by default.
+*/
+/* TEST CODE
+objCollection := ObjCSV_CSV2Collection("C:\Dropbox\AutoHotkey\ObjCSV Test files\TheBeatles.txt", strFieldNames)
+ObjCSV_Collection2HTML(objCollection, A_ScriptDir . "\TheBeatles.html", A_ScriptDir . "\html-template.txt", , 0, 1)
+return
+*/
+{
+	if (FileExist(strFilePath) and !blnOverwrite)
+		return
+	if !FileExist(strTemplateFile) or (StrLen(strTemplateEncapsulator) > 1)
+		return
+	FileRead, strTemplate, %strTemplateFile%
+	intPos := InStr(strTemplate, strTemplateEncapsulator . "ROWS" . strTemplateEncapsulator)
+	strTemplateHeader :=  SubStr(strTemplate, 1, intPos - 1)
+	strTemplate :=  SubStr(strTemplate, intPos + 6)
+	intPos := InStr(strTemplate, strTemplateEncapsulator . "/ROWS" . strTemplateEncapsulator)
+	strTemplateRow :=  SubStr(strTemplate, 1, intPos - 1)
+	strTemplate :=  SubStr(strTemplate, intPos + 7)
+	strTemplateFooter := strTemplate
+	strData := MakeHTMLHeaderFooter(strTemplateHeader, strFilePath, strTemplateEncapsulator)
+	intMax := objCollection.MaxIndex()
+	if (blnProgress)
+		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
+	Loop, %intMax% ; for each record in the collection
+	{
+		if (blnProgress) and !Mod(%A_index%, 5000)
+			Progress, %A_index%
+		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) . strEndOfLine
+	}
+	###_D("strData:`n" . strData)
+	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator)
+	FileDelete, %strFilePath%
+	FileAppend, %strData%, %strFilePath%
+	if (blnProgress)
+		Progress, Off
+	return
+}
+;================================================
+
+
+
+;================================================
 ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", strFieldOrder := "", strFieldDelimiter := ",", strEncapsulator := """", strSortFields := "", strSortOptions := "", blnProgress := 0)
 /*
 Summary: Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView. NOTE-1: Due to an AHK limitation, files with more that 200 fields will not be transfered to a ListView. NOTE-2: Although any length of text can be stored in each cell of a ListView, only the first 260 characters are displayed (no lost data).
@@ -715,6 +803,29 @@ MakeFixedWidth(strFixed, intWidth)
 
 
 
+MakeHTMLHeaderFooter(strTemplate, strFilePath, strEncapsulator)
+{
+	SplitPath, strFilePath, strFileName, strDir, strExtension, strNameNoExt, strDrive
+	StringReplace, strOutput, strTemplate, %strEncapsulator%FILENAME%strEncapsulator%, %strFileName%, All
+	StringReplace, strOutput, strOutput, %strEncapsulator%DIR%strEncapsulator%, %strDir%, All
+	StringReplace, strOutput, strOutput, %strEncapsulator%EXTENSION%strEncapsulator%, %strExtension%, All
+	StringReplace, strOutput, strOutput, %strEncapsulator%NAMENOEXT%strEncapsulator%, %strNameNoExt%, All
+	StringReplace, strOutput, strOutput, %strEncapsulator%DRIVE%strEncapsulator%, %strDrive%, All
+	return %strOutput%
+}
+
+
+
+MakeHTMLRow(strTemplate, objRow, intRow, strEncapsulator)
+{
+	StringReplace, strOutput, strTemplate, %strEncapsulator%ROWNUMBER%strEncapsulator%, %intRow%, All
+	for strFieldName, strValue in objRow
+		StringReplace, strOutput, strOutput, %strEncapsulator%%strFieldName%%strEncapsulator%, %strValue%, All
+	return %strOutput%
+}
+
+
+
 Format4CSV(F4C_String, strFieldDelimiter := ",", strEncapsulator := """")
 /*
 Format4CSV by Rhys (http://www.autohotkey.com/forum/topic27233.html)
@@ -738,6 +849,7 @@ Added the strEncapsulator parameter to make it work with other encapsultors than
       F4C_String= %strEncapsulator%%F4C_String%%strEncapsulator% ; If needed, bracket the string in encapsulators
    Return, F4C_String
 }
+
 
 
 ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
