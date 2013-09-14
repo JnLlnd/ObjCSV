@@ -387,10 +387,10 @@ objCollection
 Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
 
 strFilePath
-The name of the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. This string can be inserted in the HTML template as described below.
+The name of the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. This path and name of the file can be inserted in the HTML template as described below.
 
 strTemplateFile
-The name of the HTML template file used to create the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. In the template, markups and variables are encapsulated by the strTemplateEncapsulator (single charater of your choice). Markups and variables are not case sensitive unless StringCaseSense has been turned on. The template is divided in three sections: the header template (from the start of the file to the start of the row template), the row template (delimited by the markups ROWS and /ROWS) and the footer template (from the end of the row template to the end of the file). The row template is repeated in the output file for each record in the collection with field names encapsulated by the strTemplateEncapsulator are replaced by the matching data in each record.  Additionally, in the header and footer, the following variables are replaced by parts of the parameter strFilePath: FILENAME (file name without its path, but including its extension), DIR (directory of the file, final backslash excluded, but drive letter or share name included, if present), EXTENSION (file's extension), NAMENOEXT (file name without its path, dot and extension) and DRIVE (drive letter or server name, if present). Finally, in the row template, ROWNUMBER will be replaced by the current row number. This simple example, where each record has two fields named "Field1" and "Field2" and the strTemplateEncapsulator is ~ (tilde), shows the use of the various markups and variables:
+The name of the HTML template file used to create the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. In the template, markups and variables are encapsulated by the strTemplateEncapsulator parameter (single charater of your choice). Markups and variables are not case sensitive unless StringCaseSense has been turned on. The template is divided in three sections: the header template (from the start of the file to the start of the row template), the row template (delimited by the markups ROWS and /ROWS) and the footer template (from the end of the row template to the end of the file). The row template is repeated in the output file for each record in the collection. Field names encapsulated by the strTemplateEncapsulator parameter are replaced by the matching data in each record.  Additionally, in the header and footer, the following variables encapsulated by the strTemplateEncapsulator are replaced by parts of the strFilePath parameter: FILENAME (file name without its path, but including its extension), DIR (drive letter or share name, if present, and directory of the file, final backslash excluded), EXTENSION (file's extension, dot excluded), NAMENOEXT (file name without its path, dot and extension) and DRIVE (drive letter or server name, if present). Finally, in the row template, ROWNUMBER is replaced by the current row number. This simple example, where each record has two fields named "Field1" and "Field2" and the strTemplateEncapsulator is ~ (tilde), shows the use of the various markups and variables:
 		<HEAD>
 		<TITLE>~NAMENOEXT~</TITLE>
 		</HEAD>
@@ -416,7 +416,7 @@ blnProgress := 0
 Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
 
 blnOverwrite := 0
-Optional. If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function returns without writing the output file. False (or 0) by default.
+Optional. If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
 */
 /* TEST CODE
 objCollection := ObjCSV_CSV2Collection("C:\Dropbox\AutoHotkey\ObjCSV Test files\TheBeatles.txt", strFieldNames)
@@ -426,17 +426,17 @@ return
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
 		return
-	if !FileExist(strTemplateFile) or (StrLen(strTemplateEncapsulator) > 1)
+	if !FileExist(strTemplateFile) or (StrLen(strTemplateEncapsulator) <> 1) ; if template is not provided or if variable encapsulator is not one character
 		return
 	FileRead, strTemplate, %strTemplateFile%
-	intPos := InStr(strTemplate, strTemplateEncapsulator . "ROWS" . strTemplateEncapsulator)
-	strTemplateHeader :=  SubStr(strTemplate, 1, intPos - 1)
-	strTemplate :=  SubStr(strTemplate, intPos + 6)
-	intPos := InStr(strTemplate, strTemplateEncapsulator . "/ROWS" . strTemplateEncapsulator)
-	strTemplateRow :=  SubStr(strTemplate, 1, intPos - 1)
-	strTemplate :=  SubStr(strTemplate, intPos + 7)
-	strTemplateFooter := strTemplate
-	strData := MakeHTMLHeaderFooter(strTemplateHeader, strFilePath, strTemplateEncapsulator)
+	intPos := InStr(strTemplate, strTemplateEncapsulator . "ROWS" . strTemplateEncapsulator) ; start of the row template
+	strTemplateHeader :=  SubStr(strTemplate, 1, intPos - 1) ;  extract header
+	strTemplate :=  SubStr(strTemplate, intPos + 6) ;  remove header template from template string
+	intPos := InStr(strTemplate, strTemplateEncapsulator . "/ROWS" . strTemplateEncapsulator) ; end of the row template
+	strTemplateRow :=  SubStr(strTemplate, 1, intPos - 1) ; extract row template
+	strTemplate :=  SubStr(strTemplate, intPos + 7) ;  remove row template from template string
+	strTemplateFooter := strTemplate ; remaining of the template string is the footer template
+	strData := MakeHTMLHeaderFooter(strTemplateHeader, strFilePath, strTemplateEncapsulator) ; replace variables in the header template and initialize the HTML data string
 	intMax := objCollection.MaxIndex()
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
@@ -444,11 +444,10 @@ return
 	{
 		if (blnProgress) and !Mod(%A_index%, 5000)
 			Progress, %A_index%
-		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) . strEndOfLine
+		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) . strEndOfLine ; replace variables in the row template and append to the HTML data string
 	}
-	; ###_D("strData:`n" . strData)
-	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator)
-	FileDelete, %strFilePath%
+	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator) ; replace variables in the footer template and append to the HTML data string
+	FileDelete, %strFilePath% ; delete existing file if present, no error if missing
 	FileAppend, %strData%, %strFilePath%
 	if (blnProgress)
 		Progress, Off
@@ -765,53 +764,6 @@ CALL-FOR-HELP!
 
 
 
-GetFirstUnusedAsciiCode(strData, intAscii := 161)
-/*
-Summary: Returns the ASCII code of the first character absent from the strData string, starting at ASCII code intAscii. By default, ¡ (inverted exclamation mark ASCII 161) or the next available character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.
-*/
-{
-	Loop
-		if InStr(strData, Chr(intAscii))
-			intAscii := intAscii + 1
-		else
-			break
-	return intAscii
-}
-
-
-
-MakeFixedWidth(strFixed, intWidth)
-{
-	while StrLen(strFixed) < intWidth
-		strFixed := strFixed . " " ; pad with space
-	return SubStr(strFixed, 1, intWidth) ; or truncate
-}
-
-
-
-MakeHTMLHeaderFooter(strTemplate, strFilePath, strEncapsulator)
-{
-	SplitPath, strFilePath, strFileName, strDir, strExtension, strNameNoExt, strDrive
-	StringReplace, strOutput, strTemplate, %strEncapsulator%FILENAME%strEncapsulator%, %strFileName%, All
-	StringReplace, strOutput, strOutput, %strEncapsulator%DIR%strEncapsulator%, %strDir%, All
-	StringReplace, strOutput, strOutput, %strEncapsulator%EXTENSION%strEncapsulator%, %strExtension%, All
-	StringReplace, strOutput, strOutput, %strEncapsulator%NAMENOEXT%strEncapsulator%, %strNameNoExt%, All
-	StringReplace, strOutput, strOutput, %strEncapsulator%DRIVE%strEncapsulator%, %strDrive%, All
-	return %strOutput%
-}
-
-
-
-MakeHTMLRow(strTemplate, objRow, intRow, strEncapsulator)
-{
-	StringReplace, strOutput, strTemplate, %strEncapsulator%ROWNUMBER%strEncapsulator%, %intRow%, All
-	for strFieldName, strValue in objRow
-		StringReplace, strOutput, strOutput, %strEncapsulator%%strFieldName%%strEncapsulator%, %strValue%, All
-	return %strOutput%
-}
-
-
-
 Format4CSV(F4C_String, strFieldDelimiter := ",", strEncapsulator := """")
 /*
 Format4CSV by Rhys (http://www.autohotkey.com/forum/topic27233.html)
@@ -887,3 +839,53 @@ See Delimiter Seperated Values by DerRaphael (http://www.autohotkey.com/forum/po
 	}                                       ; added by one
 	return objReturnObject                  ; return the object array to the function caller
 }
+
+
+
+GetFirstUnusedAsciiCode(strData, intAscii := 161)
+/*
+Summary: Returns the ASCII code of the first character absent from the strData string, starting at ASCII code intAscii. By default, ¡ (inverted exclamation mark ASCII 161) or the next available character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.
+*/
+{
+	Loop
+		if InStr(strData, Chr(intAscii))
+			intAscii := intAscii + 1
+		else
+			break
+	return intAscii
+}
+
+
+
+MakeFixedWidth(strFixed, intWidth)
+{
+	while StrLen(strFixed) < intWidth
+		strFixed := strFixed . " " ; pad with space
+	return SubStr(strFixed, 1, intWidth) ; or truncate
+}
+
+
+
+MakeHTMLHeaderFooter(strTemplate, strFilePath, strEncapsulator)
+{
+	SplitPath, strFilePath, strFileName, strDir, strExtension, strNameNoExt, strDrive
+	StringReplace, strOutput, strTemplate, %strEncapsulator%FILENAME%strEncapsulator%, %strFileName%, All
+	StringReplace, strOutput, strOutput, %strEncapsulator%DIR%strEncapsulator%, %strDir%, All
+	StringReplace, strOutput, strOutput, %strEncapsulator%EXTENSION%strEncapsulator%, %strExtension%, All
+	StringReplace, strOutput, strOutput, %strEncapsulator%NAMENOEXT%strEncapsulator%, %strNameNoExt%, All
+	StringReplace, strOutput, strOutput, %strEncapsulator%DRIVE%strEncapsulator%, %strDrive%, All
+	return %strOutput%
+}
+
+
+
+MakeHTMLRow(strTemplate, objRow, intRow, strEncapsulator)
+{
+	StringReplace, strOutput, strTemplate, %strEncapsulator%ROWNUMBER%strEncapsulator%, %intRow%, All
+	for strFieldName, strValue in objRow
+		StringReplace, strOutput, strOutput, %strEncapsulator%%strFieldName%%strEncapsulator%, %strValue%, All
+	return %strOutput%
+}
+
+
+
