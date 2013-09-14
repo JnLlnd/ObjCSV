@@ -279,13 +279,13 @@ objCollection
 Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
 
 strFilePath
-The name of the CSV file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
+The name of the fixed-width destination file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
 
 strWidth
 Width for each field. Each numeric values must be in the same order as strFieldOrder and separated by the strFieldDelimiter character.
 
 blnHeader := 0
-Optional. If true, the field names in the collection objects are inserted as header of the file, padded or truncated according to the width for each field. NOTE: If field names are longer than their fixed-width they will be truncated as well.
+Optional. If true, the field names in the collection objects are inserted as header of the file, padded or truncated according to each field's width. NOTE: If field names are longer than their fixed-width they will be truncated as well.
 
 strFieldOrder := ""
 Optional. List of field to include in the file and the order of these fields in the file. Fields names must be separated by the strFieldDelimiter character and, if required, encapsulated by the strEncapsulator character. If empty, all fields are included. Empty by default.
@@ -306,11 +306,11 @@ strEndOfLine := "`r`n"
 Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
 
 strEolReplacement := ""
-Optional. A fixed-width file should not include end-of-line within data. If it does and it a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
+Optional. A fixed-width file should not include end-of-line within data. If it does and if a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
 */
 {
-	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter% ; arrIntWidth is a pseudo-array, so %arrIntWidth1% or arrIntWidth%intColIndex%
-	strData := ""
+	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter% ; get width for each field in the pseudo-array arrIntWidth, so %arrIntWidth1% or arrIntWidth%intColIndex%
+	strData := "" ; string to save in the fixed-width file
 	intMax := objCollection.MaxIndex()
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
@@ -320,25 +320,18 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 		if StrLen(strFieldOrder) ; convert DSV string to fixed-width
 		{
 			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated field names
-			{
-				; ###_D("strFieldName: " . strFieldName . "`nintColIndex:" . intColIndex)
-				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%)
-				; ###_D("arrIntWidth%intColIndex%: " . arrIntWidth%intColIndex% . "`nstrHeaderFixed: " . strHeaderFixed . "`nStrLen(strHeaderFixed):" . StrLen(strHeaderFixed))
-			}
-			; ###_D("HEADER FIX AVEC strFieldOrder / strHeaderFixed:`n" . strHeaderFixed, 1)
+				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%) ; add fixed-width field name for each column
 		}
 		else ; we dont have a header, so we take field names from the first record of objCollection, in their natural order 
 		{
 			intColIndex := 1
 			for strFieldName, strValue in objCollection[1]
 			{
-				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%)
+				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%) ; add fixed-width field name for each column
 				intColIndex := intColIndex + 1
 			}
-			; ###_D("HEADER FIX PAS DE strFieldOrder / strHeaderFixed:`n" . strHeaderFixed, 1)
 		}
 		strData := strHeaderFixed . strEndOfLine ; put this header as first line of the file
-		; ###_D("AVEC HEADER strData:`n" . strData, 1)
 	}
 	Loop, %intMax% ; for each record in the collection
 	{
@@ -347,34 +340,27 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 			Progress, %A_index%
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
-			; ###_D("DATA AVEC strFieldOrder", 1)
 			intLineNumber := A_Index
 			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated field names
 			{
 				strValue := objCollection[intLineNumber][Trim(strFieldName)]
-				; ###_D("strFieldName: " . strFieldName . "`nstrValue: " . strValue . "`nintColIndex:" . intColIndex)
 				if (StrLen(strEolReplacement)) ; multiline field eol replacement
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
-				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
-				; ###_D("arrIntWidth%intColIndex%: " . arrIntWidth%intColIndex% . "`nstrRecord: " . strRecord . "`nStrLen(strRecord):" . StrLen(strRecord))
+				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%) ; add fixed-width data field for each column
 			}
 		}
 		else ;  we put all fields in the record (I assume the order of fields is the same for each object)
 		{
-			; ###_D("DATA SANS strFieldOrder")
 			intColIndex := 1
 			for strFieldName, strValue in objCollection[A_Index]
 			{
-				; ###_D("strFieldName: " . strFieldName . "`nstrValue: " . strValue . "`nintColIndex:" . intColIndex)
 				if (StrLen(strEolReplacement))
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
-				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
-				; ###_D("arrIntWidth%intColIndex%: " . arrIntWidth%intColIndex% . "`nstrRecord: " . strRecord . "`nStrLen(strRecord):" . StrLen(strRecord))
+				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%) ; add fixed-width data field for each column
 				intColIndex := intColIndex + 1
 			}
 		}
-		strData := strData . strRecord . strEndOfLine
-		; ###_D("strData:`n" . strData, 1)
+		strData := strData . strRecord . strEndOfLine ; add record to the file
 	}
 	if (blnOverwrite)
 		FileDelete, %strFilePath%
@@ -460,7 +446,7 @@ return
 			Progress, %A_index%
 		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) . strEndOfLine
 	}
-	###_D("strData:`n" . strData)
+	; ###_D("strData:`n" . strData)
 	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator)
 	FileDelete, %strFilePath%
 	FileAppend, %strData%, %strFilePath%
@@ -797,8 +783,8 @@ Summary: Returns the ASCII code of the first character absent from the strData s
 MakeFixedWidth(strFixed, intWidth)
 {
 	while StrLen(strFixed) < intWidth
-		strFixed := strFixed . " "
-	return SubStr(strFixed, 1, intWidth)
+		strFixed := strFixed . " " ; pad with space
+	return SubStr(strFixed, 1, intWidth) ; or truncate
 }
 
 
