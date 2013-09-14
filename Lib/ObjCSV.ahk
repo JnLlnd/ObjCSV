@@ -26,14 +26,17 @@ For more info on CSV files, see http://en.wikipedia.org/wiki/Comma-separated_val
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, blnProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r", strEolReplacement = ""])
 Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNames parameter. Delimiters are configurable.
 
-ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
+ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`r`n", strEolReplacement = ""])
 Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionnaly included in the CSV file. Delimiters are configurable.
 
-ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
+ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`r`n", strEolReplacement = ""])
 Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included in the file. Delimiters are configurable. Width are determined by the delimited string strWidth.
 
-ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, blnProgress = 0, blnOverwrite = 0)
+ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, blnProgress = 0, blnOverwrite = 0, strEndOfLine = "`r`n"])
 Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
+
+ObjCSV_Collection2XML(objCollection, strFilePath [, blnProgress = 0, blnOverwrite = 0, strEndOfLine = "`r`n"])
+Builds an XML file from the content of the collection. The calling script must ensure encoding compliance with the rules of XML syntax for the field names and field data.
 
 ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", blnProgress = 0])
 Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView.
@@ -374,7 +377,7 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 
 
 ;================================================
-ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateEncapsulator := "~", blnProgress := 0, blnOverwrite := 0)
+ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateEncapsulator := "~", blnProgress := 0, blnOverwrite := 0, strEndOfLine := "`r`n")
 /*
 Summary: Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
 
@@ -417,11 +420,9 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 
 blnOverwrite := 0
 Optional. If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
-*/
-/* TEST CODE
-objCollection := ObjCSV_CSV2Collection("C:\Dropbox\AutoHotkey\ObjCSV Test files\TheBeatles.txt", strFieldNames)
-ObjCSV_Collection2HTML(objCollection, A_ScriptDir . "\TheBeatles.html", A_ScriptDir . "\html-template.txt", , 0, 1)
-return
+
+strEndOfLine := "`r`n"
+Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
 */
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
@@ -447,6 +448,66 @@ return
 		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) . strEndOfLine ; replace variables in the row template and append to the HTML data string
 	}
 	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator) ; replace variables in the footer template and append to the HTML data string
+	FileDelete, %strFilePath% ; delete existing file if present, no error if missing
+	FileAppend, %strData%, %strFilePath%
+	if (blnProgress)
+		Progress, Off
+	return
+}
+;================================================
+
+
+
+;================================================
+ObjCSV_Collection2XML(objCollection, strFilePath, blnProgress := 0, blnOverwrite := 0, strEndOfLine := "`r`n")
+/*
+Summary: Builds an XML file from the content of the collection. The calling script must ensure encoding compliance with the rules of XML syntax for the field names and field data. This simple example, where each record has two fields named "Field1" and "Field2", shows the XML output format:
+		<?xml version='1.0'?>
+		<XMLExport>
+			<Record>
+				<Field1>Value Row 1 Col 1</Field1>
+				<Field2>Value Row 1 Col 2</Field1>
+			</Record>
+			<Record>
+				<Field1>Value Row 2 Col 1</Field1>
+				<Field2>Value Row 2 Col 2</Field1>
+			</Record>
+		</XMLExport>
+
+RETURNED VALUE:
+None.
+
+PARAMETERS:
+
+objCollection
+Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
+
+strFilePath
+The name of the XML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
+
+blnProgress := 0
+Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+
+blnOverwrite := 0
+Optional. If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
+
+strEndOfLine := "`r`n"
+Optional. Character(s) inserted at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
+*/
+{
+	if (FileExist(strFilePath) and !blnOverwrite)
+		return
+	strData := "<?xml version='1.0'?>" . strEndOfLine . "<XMLExport>" . strEndOfLine ; initialize the XML data string with XML header
+	intMax := objCollection.MaxIndex()
+	if (blnProgress)
+		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
+	Loop, %intMax% ; for each record in the collection
+	{
+		if (blnProgress) and !Mod(%A_index%, 5000)
+			Progress, %A_index%
+		strData := strData . MakeXMLRow(objCollection[A_Index], strEndOfLine) ; append XML for this row to the XML data string
+	}
+	strData := strData . "</XMLExport>" . strEndOfLine ; append XML footer to the XML data string
 	FileDelete, %strFilePath% ; delete existing file if present, no error if missing
 	FileAppend, %strData%, %strFilePath%
 	if (blnProgress)
@@ -884,6 +945,17 @@ MakeHTMLRow(strTemplate, objRow, intRow, strEncapsulator)
 	StringReplace, strOutput, strTemplate, %strEncapsulator%ROWNUMBER%strEncapsulator%, %intRow%, All
 	for strFieldName, strValue in objRow
 		StringReplace, strOutput, strOutput, %strEncapsulator%%strFieldName%%strEncapsulator%, %strValue%, All
+	return %strOutput%
+}
+
+
+
+MakeXMLRow(objRow, strEndOfLine)
+{
+	strOutput := A_Tab . "<Record>" . strEndOfLine
+	for strFieldName, strValue in objRow
+		strOutput := strOutput . A_Tab . A_Tab . "<" . strFieldName .  ">" . strValue . "</" . strFieldName .  ">" . strEndOfLine
+	strOutput := strOutput . A_Tab . "</Record>" . strEndOfLine
 	return %strOutput%
 }
 
