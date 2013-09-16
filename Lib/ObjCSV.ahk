@@ -36,7 +36,7 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplat
 Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
 
 ObjCSV_Collection2XML(objCollection, strFilePath [, blnProgress = 0, blnOverwrite = 0, strEndOfLine = "`r`n"])
-Builds an XML file from the content of the collection. The calling script must ensure encoding compliance with the rules of XML syntax for the field names and field data.
+Builds an XML file from the content of the collection. The calling script must ensure that field names and field data comply with the rules of XML syntax.
 
 ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", blnProgress = 0])
 Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView.
@@ -271,7 +271,7 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 ;================================================
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", blnProgress := 0, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n", strEolReplacement := "")
 /*
-Summary: Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with spaces. Field names and data fields longer than their width are truncated at their maximal width.
+Summary: Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
 
 RETURNED VALUE:
 None.
@@ -461,7 +461,7 @@ Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (ca
 ;================================================
 ObjCSV_Collection2XML(objCollection, strFilePath, blnProgress := 0, blnOverwrite := 0, strEndOfLine := "`r`n")
 /*
-Summary: Builds an XML file from the content of the collection. The calling script must ensure encoding compliance with the rules of XML syntax for the field names and field data. This simple example, where each record has two fields named "Field1" and "Field2", shows the XML output format:
+Summary: Builds an XML file from the content of the collection. The calling script must ensure that field names and field data comply with the rules of XML syntax. This simple example, where each record has two fields named "Field1" and "Field2", shows the XML output format:
 		<?xml version='1.0'?>
 		<XMLExport>
 			<Record>
