@@ -1,5 +1,5 @@
 ;===============================================
-/* ObjCSV Library v0.2.2
+/* ObjCSV Library v0.2.2/fix-issue-8
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 2013-09-15
@@ -55,7 +55,9 @@ See details for each fucntions below.
 
 
 ;================================================
-ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, blnProgress := 0, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r", strEolReplacement := "")
+ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, blnProgress := 0
+	, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r"
+	, strEolReplacement := "")
 /*
 Summary: Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by the ByRef variable strFieldNames. Delimiters are configurable.
 
@@ -100,8 +102,10 @@ Optional. Character (or string) that will be converted to line-breaks if found i
 	objHeader := Object() ; holds the keys (fields name) of the objects in the collection
 	FileRead, strData, %strFilePath%
 	if blnMultiline
-		chrEolReplacement := Prepare4Multilines(strData, strEncapsulator, blnProgress) ; make sure each record temporarily stands on a single line *** not tested on files with eol other than `n
-	strData := Trim(strData, strRecordDelimiter) ; remove empty line (record) at the beginning or end of the string, if present
+		chrEolReplacement := Prepare4Multilines(strData, strEncapsulator, blnProgress)
+			; make sure each record temporarily stands on a single line *** not tested on files with eol other than `n
+	strData := Trim(strData, strRecordDelimiter)
+		; remove empty line (record) at the beginning or end of the string, if present
 	if (blnProgress)
 	{
 		intMaxProgress := StrLen(strData)
@@ -110,28 +114,29 @@ Optional. Character (or string) that will be converted to line-breaks if found i
 	}
 	Loop, Parse, strData, %strRecordDelimiter%, %strOmitChars% ; read each line (record) of the CSV file
 	{
-		intProgress := intProgress + StrLen(A_LoopField) + 2 ; for Progress bar, augment intProgress of len of line + 2 for cr-lf 
+		intProgress := intProgress + StrLen(A_LoopField) + 2
+			; for Progress bar, augment intProgress of len of line + 2 for cr-lf 
 		if (blnProgress AND !Mod(intProgress, 5000))
 			Progress, %intProgress% ;  update progress bar only every 5000 chars
 		if (A_Index = 1) and (blnHeader) ; we have an header to read
 		{
-			objHeader := ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator) ; returns an object array from the first line of the delimited-separated-value file
-			strFieldNamesMatchList := ""
+			objHeader := ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
+				; returns an object array from the first line of the delimited-separated-value file
+			strFieldNamesMatchList := strFieldDelimiter
 			Loop, % objHeader.MaxIndex() ; check if fields names are empty or duplicated
 			{
 				if !StrLen(objHeader[A_Index]) ; field name is empty
 					objHeader[A_Index] := "Empty_" . A_Index ; use field number as field name
 				else
-					if InStr(strFieldNamesMatchList, objHeader[A_Index]) ; field name is duplicate
+					if InStr(strFieldNamesMatchList, strFieldDelimiter . objHeader[A_Index] . strFieldDelimiter)
+						; field name is duplicate
 						objHeader[A_Index] := objHeader[A_Index] . "_" . A_Index ; add field number to field name
-				if !StrLen(strFieldNamesMatchList)
-					strFieldNamesMatchList := objHeader[A_Index]
-				else
-					strFieldNamesMatchList := strFieldNamesMatchList . "," . objHeader[A_Index]
+				strFieldNamesMatchList := strFieldNamesMatchList . objHeader[A_Index] . strFieldDelimiter
 			}
 			strFieldNames := ""
 			for intIndex, strFieldName in objHeader ; returns the updated field names to the ByRef variable
-				strFieldNames := strFieldNames . Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
+				strFieldNames := strFieldNames . Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator)
+					. strFieldDelimiter
 			StringTrimRight, strFieldNames, strFieldNames, 1 ; remove extra field delimiter
 			if !(objHeader.MaxIndex()) ; we don't have an object, something went wrong
 			{
@@ -143,24 +148,34 @@ Optional. Character (or string) that will be converted to line-breaks if found i
 		else
 		{
 			if (A_Index = 1) and StrLen(strFieldNames)
-				; If we get here, bnHeader is false so there is no header in the CSV file but we have values in strFieldNames.
-				; In this case, we get field names from strFieldNames.
-				objHeader := ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator) ; returns an object array from the delimited-separated-value strFieldNames string
+				; If we get here, bnHeader is false so there is no header in the CSV file but we have values
+				; in strFieldNames. In this case, we get field names from strFieldNames.
+				objHeader := ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
+					; returns an object array from the delimited-separated-value strFieldNames string
 			objData := Object() ;  object of one record in the collection
-			for intIndex, strFieldData in ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator) ; returns an object array from each line of the delimited-separated-value file
+			for intIndex, strFieldData in ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
+				; returns an object array from each line of the delimited-separated-value file
 			{
 				if blnMultiline
 				{
-					StringReplace, strFieldData, strFieldData, %chrEolReplacement%, %strRecordDelimiter%, 1 ; put back all original end-of-line chararchers in each field, if present
-					; Using %strRecordDelimiter% as replacement in the next command, eol are lost when saved using ObjCSV_Collection2CSV and opened in Notepad.
-					; However, %strRecordDelimiter% seems to work well in the previous command... Anyway, for safety (at least in the Windows environment), I replaced it with `r`n in the next command.
-					; For reference, see http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/ and http://peterbenjamin.com/seminars/crossplatform/texteol.html
-					StringReplace, strFieldData, strFieldData, %strEolReplacement%, `r`n, 1 ; replace all user-supplied replacement character with end-of-line, if present
+					StringReplace, strFieldData, strFieldData, %chrEolReplacement%, %strRecordDelimiter%, 1
+						; put back all original end-of-line chararchers in each field, if present
+						/*
+						Using %strRecordDelimiter% as replacement in the next command, eol are lost when saved
+						using ObjCSV_Collection2CSV and opened in Notepad. However, %strRecordDelimiter% seems
+						to work well in the previous command... Anyway, for safety (at least in the Windows
+						environment), I replaced it with `r`n in the next command.
+						For reference, see http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/
+						and http://peterbenjamin.com/seminars/crossplatform/texteol.html
+						*/
+					StringReplace, strFieldData, strFieldData, %strEolReplacement%, `r`n, 1
+						; replace all user-supplied replacement character with end-of-line, if present
 				}
 				if StrLen(objHeader[A_Index])
 					objData[objHeader[A_Index]] := strFieldData ; we have field names in objHeader[A_Index]
 				else
-					objData[A_Index] := strFieldData ; we don't have field names so we use index numbers as key/field names
+					objData[A_Index] := strFieldData
+						; we don't have field names so we use index numbers as key/field names
 			}
 			objCollection.Insert(objData) ;  add the object (record) to the collection
 		}
