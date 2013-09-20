@@ -1,18 +1,28 @@
 ;===============================================
-/* ObjCSV Library v0.2.2/fix-issue-8
+/* ObjCSV Library v0.2.3
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
-2013-09-15
+2013-09-20
 */
 
 ;================================================
-/*INSTRUCTIONS
+/* INSTRUCTIONS
 Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:
   %A_ScriptDir%\Lib\
   %A_MyDocuments%\AutoHotkey\Lib\
   [path to the currently running AutoHotkey_L.exe]\Lib\ (AutoHotKey_L can be downloaded here: http://l.autohotkey.net/ )
 
 You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
+================================================
+*/
+
+;================================================
+/* VERSIONS HISTORY
+0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of code
+0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML (ObjCSV_Collection2XML)
+0.1.3  2013-09-08  Multi-line replacement character at load time in ObjCSV_CSV2Collection
+0.1.2  2013-09-05  Standardize boolean parameters to 0/1 (not True/False) and without double-quotes
+0.1.1  2013-08-26  First release
 ================================================
 */
 
@@ -191,7 +201,9 @@ Optional. Character (or string) that will be converted to line-breaks if found i
 
 
 ;================================================
-ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", blnProgress := 0, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n", strEolReplacement := "")
+ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", blnProgress := 0
+	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n"
+	, strEolReplacement := "")
 /*
 Summary: Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.
 
@@ -237,10 +249,13 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 		Progress, R0-%intMax% FS8 A, Saving data to CSV file..., , , MS Sans Serif
 	if (blnHeader) ; put the field names (header) in the first line of the CSV file
 	{
-		if !StrLen(strFieldOrder) ; we dont have a header, so we take field names from the first record of objCollection, in their natural order 
+		if !StrLen(strFieldOrder)
+			; we don't have a header, so we take field names from the first record of objCollection,
+			; in their natural order 
 		{
 			for strFieldName, strValue in objCollection[1]
-				strFieldOrder := strFieldOrder . Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
+				strFieldOrder := strFieldOrder . Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator) 
+					. strFieldDelimiter
 			StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
 		}
 		strData := strFieldOrder . strEndOfLine ; put this header as first line of the file
@@ -253,7 +268,8 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 		if StrLen(strFieldOrder) ;  we put only these fields, in this order
 		{
 			intLineNumber := A_Index
-			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated field names
+			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+				; parse strFieldOrder handling encapsulated field names
 			{
 				strValue := objCollection[intLineNumber][Trim(strFieldName)]
 				if (StrLen(strEolReplacement)) ; multiline field eol replacement
@@ -284,7 +300,9 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 
 
 ;================================================
-ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", blnProgress := 0, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n", strEolReplacement := "")
+ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", blnProgress := 0
+	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n"
+	, strEolReplacement := "")
 /*
 Summary: Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
 
@@ -327,7 +345,8 @@ strEolReplacement := ""
 Optional. A fixed-width file should not include end-of-line within data. If it does and if a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
 */
 {
-	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter% ; get width for each field in the pseudo-array arrIntWidth, so %arrIntWidth1% or arrIntWidth%intColIndex%
+	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter%
+		; get width for each field in the pseudo-array arrIntWidth, so %arrIntWidth1% or arrIntWidth%intColIndex%
 	strData := "" ; string to save in the fixed-width file
 	intMax := objCollection.MaxIndex()
 	if (blnProgress)
@@ -337,15 +356,20 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 		strHeaderFixed := ""
 		if StrLen(strFieldOrder) ; convert DSV string to fixed-width
 		{
-			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated field names
-				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%) ; add fixed-width field name for each column
+			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+				; parse strFieldOrder handling encapsulated field names
+				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%)
+					; add fixed-width field name for each column
 		}
-		else ; we dont have a header, so we take field names from the first record of objCollection, in their natural order 
+		else
+			; we dont have a header, so we take field names from the first record of objCollection,
+			; in their natural order
 		{
 			intColIndex := 1
 			for strFieldName, strValue in objCollection[1]
 			{
-				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%) ; add fixed-width field name for each column
+				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%)
+					; add fixed-width field name for each column
 				intColIndex := intColIndex + 1
 			}
 		}
@@ -359,12 +383,14 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
 			intLineNumber := A_Index
-			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated field names
+			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+				; parse strFieldOrder handling encapsulated field names
 			{
 				strValue := objCollection[intLineNumber][Trim(strFieldName)]
 				if (StrLen(strEolReplacement)) ; multiline field eol replacement
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
-				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%) ; add fixed-width data field for each column
+				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
+					; add fixed-width data field for each column
 			}
 		}
 		else ;  we put all fields in the record (I assume the order of fields is the same for each object)
@@ -374,7 +400,8 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 			{
 				if (StrLen(strEolReplacement))
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
-				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%) ; add fixed-width data field for each column
+				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
+					; add fixed-width data field for each column
 				intColIndex := intColIndex + 1
 			}
 		}
@@ -392,7 +419,8 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 
 
 ;================================================
-ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateEncapsulator := "~", blnProgress := 0, blnOverwrite := 0, strEndOfLine := "`r`n")
+ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateEncapsulator := "~", blnProgress := 0
+	, blnOverwrite := 0, strEndOfLine := "`r`n")
 /*
 Summary: Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
 
@@ -442,17 +470,21 @@ Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (ca
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
 		return
-	if !FileExist(strTemplateFile) or (StrLen(strTemplateEncapsulator) <> 1) ; if template is not provided or if variable encapsulator is not one character
+	if !FileExist(strTemplateFile) or (StrLen(strTemplateEncapsulator) <> 1)
+		; if template is not provided or if variable encapsulator is not one character
 		return
 	FileRead, strTemplate, %strTemplateFile%
-	intPos := InStr(strTemplate, strTemplateEncapsulator . "ROWS" . strTemplateEncapsulator) ; start of the row template
+	intPos := InStr(strTemplate, strTemplateEncapsulator . "ROWS" . strTemplateEncapsulator)
+		; start of the row template
 	strTemplateHeader :=  SubStr(strTemplate, 1, intPos - 1) ;  extract header
 	strTemplate :=  SubStr(strTemplate, intPos + 6) ;  remove header template from template string
-	intPos := InStr(strTemplate, strTemplateEncapsulator . "/ROWS" . strTemplateEncapsulator) ; end of the row template
+	intPos := InStr(strTemplate, strTemplateEncapsulator . "/ROWS" . strTemplateEncapsulator)
+		; end of the row template
 	strTemplateRow :=  SubStr(strTemplate, 1, intPos - 1) ; extract row template
 	strTemplate :=  SubStr(strTemplate, intPos + 7) ;  remove row template from template string
 	strTemplateFooter := strTemplate ; remaining of the template string is the footer template
-	strData := MakeHTMLHeaderFooter(strTemplateHeader, strFilePath, strTemplateEncapsulator) ; replace variables in the header template and initialize the HTML data string
+	strData := MakeHTMLHeaderFooter(strTemplateHeader, strFilePath, strTemplateEncapsulator)
+		; replace variables in the header template and initialize the HTML data string
 	intMax := objCollection.MaxIndex()
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
@@ -460,9 +492,11 @@ Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (ca
 	{
 		if (blnProgress) and !Mod(%A_index%, 5000)
 			Progress, %A_index%
-		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) . strEndOfLine ; replace variables in the row template and append to the HTML data string
+		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) 
+			. strEndOfLine ; replace variables in the row template and append to the HTML data string
 	}
-	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator) ; replace variables in the footer template and append to the HTML data string
+	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator)
+		; replace variables in the footer template and append to the HTML data string
 	FileDelete, %strFilePath% ; delete existing file if present, no error if missing
 	FileAppend, %strData%, %strFilePath%
 	if (blnProgress)
@@ -512,7 +546,8 @@ Optional. Character(s) inserted at end-of-lines. Can be `r`n (carriage return+li
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
 		return
-	strData := "<?xml version='1.0'?>" . strEndOfLine . "<XMLExport>" . strEndOfLine ; initialize the XML data string with XML header
+	strData := "<?xml version='1.0'?>" . strEndOfLine . "<XMLExport>" . strEndOfLine
+		; initialize the XML data string with XML header
 	intMax := objCollection.MaxIndex()
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
@@ -520,7 +555,8 @@ Optional. Character(s) inserted at end-of-lines. Can be `r`n (carriage return+li
 	{
 		if (blnProgress) and !Mod(%A_index%, 5000)
 			Progress, %A_index%
-		strData := strData . MakeXMLRow(objCollection[A_Index], strEndOfLine) ; append XML for this row to the XML data string
+		strData := strData . MakeXMLRow(objCollection[A_Index], strEndOfLine)
+			; append XML for this row to the XML data string
 	}
 	strData := strData . "</XMLExport>" . strEndOfLine ; append XML footer to the XML data string
 	FileDelete, %strFilePath% ; delete existing file if present, no error if missing
@@ -534,7 +570,9 @@ Optional. Character(s) inserted at end-of-lines. Can be `r`n (carriage return+li
 
 
 ;================================================
-ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", strFieldOrder := "", strFieldDelimiter := ",", strEncapsulator := """", strSortFields := "", strSortOptions := "", blnProgress := 0)
+ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", strFieldOrder := ""
+	, strFieldDelimiter := ",", strEncapsulator := """", strSortFields := "", strSortOptions := ""
+	, blnProgress := 0)
 /*
 Summary: Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView. NOTE-1: Due to an AHK limitation, files with more that 200 fields will not be transfered to a ListView. NOTE-2: Although any length of text can be stored in each cell of a ListView, only the first 260 characters are displayed (no lost data).
 
@@ -583,13 +621,15 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 		GuiControl, -Redraw, %strListViewID% ;  stop drawing the ListView during import
 	if StrLen(strListViewID)
 		Gui, ListView, %strListViewID% ; sets the default ListView in the default Gui
-	if !StrLen(strFieldOrder) ; if we dont have fields restriction or order, take all fields in their natural order in the first records
+	if !StrLen(strFieldOrder)
+		; if we dont have fields restriction or order, take all fields in their natural order in the first records
 	{
 		for strFieldName, strValue in objCollection[1] ;  use the first record to get the field names
 			strFieldOrder := strFieldOrder . strFieldName . strFieldDelimiter
 		StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
 	}
-	objHeader := ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; returns an object array from a delimited-separated-value string
+	objHeader := ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+		; returns an object array from a delimited-separated-value string
 	if objHeader.MaxIndex() > 200 ; ListView cannot display more that 200 columns
 	{
 		if (blnProgress)
@@ -609,9 +649,11 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 		intRowNumber := A_Index
 		arrFields := Array() ; will contain the values for each cell of a new row
 		for intIndex, strFieldName in objHeader
-			arrFields[intIndex] := objCollection[intRowNumber][Trim(strFieldName)] ; for each field, in the specified order, add the data to the array
+			arrFields[intIndex] := objCollection[intRowNumber][Trim(strFieldName)]
+				; for each field, in the specified order, add the data to the array
 		LV_Add("", arrFields*) ; put each item of the array in cells of a new ListView row
-		; "arrFields*" is allowed because LV_Add is a variadic function (see http://www.autohotkey.com/board/topic/92531-lv-add-to-add-an-array/)
+		; "arrFields*" is allowed because LV_Add is a variadic function
+		; (see http://www.autohotkey.com/board/topic/92531-lv-add-to-add-an-array/)
 	}
 	Loop, % arrFields.MaxIndex()
 		LV_ModifyCol(A_Index, "AutoHdr") ;  adjust width of each column according to their content
@@ -626,7 +668,8 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 
 
 ;================================================
-ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder := "", strFieldDelimiter := ",", strEncapsulator := """", blnProgress := 0)
+ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder := "", strFieldDelimiter := ","
+	, strEncapsulator := """", blnProgress := 0)
 /*
 Summary: Transfer the selected lines of the selected columns of a ListView to a collection of objects. Lines are transfered in the order they appear in the ListView. Column headers are used as objects keys.
 
@@ -661,7 +704,8 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	intNbCols := LV_GetCount("Column") ; get the number of columns in the ListView
 	intNbRows := LV_GetCount() ; get the number of lines in the ListView
 	blnSelected := (LV_GetCount("Selected") > 0) ; we will read only selected rows
-	objHeaderPositions := Object() ; holds the keys (fields name) of the objects in the collection and their position in the ListView
+	objHeaderPositions := Object()
+		; holds the keys (fields name) of the objects in the collection and their position in the ListView
 	; build an object array with field names and their position in the ListView header
 	loop, %intNbCols%
 	{
@@ -673,7 +717,8 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 		loop, %intNbCols%
 		{
 			LV_GetText(strFieldHeader, 0, A_Index)
-			strFieldOrder := strFieldOrder . Format4CSV(strFieldHeader, strFieldDelimiter, strEncapsulator) . strFieldDelimiter ; handle field named with special characters requiring encapsulation
+			strFieldOrder := strFieldOrder . Format4CSV(strFieldHeader, strFieldDelimiter, strEncapsulator)
+				. strFieldDelimiter ; handle field named with special characters requiring encapsulation
 		}
 		StringTrimRight, strFieldOrder, strFieldOrder, 1
 	}
@@ -684,12 +729,15 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 			intRowNumber := LV_GetNext(intRowNumber) ; get next selected row number
 		else
 			intRowNumber := intRowNumber + 1 ; get next row number
-		if (not intRowNumber) OR (intRowNumber > intNbRows) ; we passed the last row or the last selected row of the ListView
+		if (not intRowNumber) OR (intRowNumber > intNbRows)
+			; we passed the last row or the last selected row of the ListView
 			break
 		objData := Object() ; add row data to a new object in the collection
-		for intIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator) ; parse strFieldOrder handling encapsulated fields
+		for intIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+			; parse strFieldOrder handling encapsulated fields
 		{
-			LV_GetText(strFieldData, intRowNumber, objHeaderPositions[Trim(strFieldName)]) ; get data from cell at row number/header position ListView
+			LV_GetText(strFieldData, intRowNumber, objHeaderPositions[Trim(strFieldName)])
+				; get data from cell at row number/header position ListView
 			objData[strFieldName] := strFieldData ; put data in the appropriate field of the new row
 		}
 		objCollection.Insert(objData)
@@ -723,7 +771,9 @@ blnProgress := 0
 Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
 */
 {
-	objCollectionSorted := Object() ; Array (or collection) of sorted objects returned by this function. See ObjCSV_CSV2Collection returned value for details.
+	objCollectionSorted := Object()
+		; Array (or collection) of sorted objects returned by this function.
+		; See ObjCSV_CSV2Collection returned value for details.
 	objCollectionSorted.SetCapacity(objCollection.MaxIndex())
 	strIndexDelimiter := "|" ;
 	intTotalRecords := objCollection.MaxIndex()
@@ -740,11 +790,12 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	;   value_one|1
 	;   value_three|3
 	;   value_two|2
-	; The sorted string is used as an index to sort the records in objCollectionSorted according to the sorting values.
-	; In our example, the objects will be added to the sorted collection in this order: 1, 3, 2.
+	; The sorted string is used as an index to sort the records in objCollectionSorted according to the sorting
+	; values. In our example, the objects will be added to the sorted collection in this order: 1, 3, 2.
 	;
 	; Because strIndex can be quite large, we gain performance by splitting the string in substrings of around 300 kb.
-	; See discussion on AHK forum http://www.autohotkey.com/board/topic/92832-tip-large-strings-performance-or-divide-to-conquer/
+	; See discussion on AHK forum
+	; http://www.autohotkey.com/board/topic/92832-tip-large-strings-performance-or-divide-to-conquer/
 	intOptimalSizeOfSubstrings := 300000 ; found by trial and error - no impact on results if not the optimal size
 	strSubstring := ""
 	Loop, %intTotalRecords% ; populate index substrings
@@ -760,8 +811,10 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 		}
 		else
 			strSortingValue := objCollection[intRecordNumber][strSortFields]
-		StringReplace, strSortingValue, strSortingValue, %strIndexDelimiter%, , 1 ; suppress all index delimiters inside sorting values
-		StringReplace, strSortingValue, strSortingValue, `n, , 1 ; suppress all end-of-lines characters inside sorting values 
+		StringReplace, strSortingValue, strSortingValue, %strIndexDelimiter%, , 1
+			; suppress all index delimiters inside sorting values
+		StringReplace, strSortingValue, strSortingValue, `n, , 1
+			; suppress all end-of-lines characters inside sorting values 
 		strSubstring := strSubstring . strSortingValue . strIndexDelimiter . intRecordNumber . "`n"
 		if StrLen(strSubstring) > intOptimalSizeOfSubstrings
 		{
@@ -774,7 +827,9 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	Sort, strIndex, %strSortOptions%
 	Loop, Parse, strIndex, `n
 	{
-		StringSplit, arrRecordKey, A_LoopField, %strIndexDelimiter% ; get the record numbers in the original collection in the order the have to be inserted in the sorted collection
+		StringSplit, arrRecordKey, A_LoopField, %strIndexDelimiter%
+			; get the record numbers in the original collection in the order the have to be inserted
+			; in the sorted collection
 		objCollectionSorted.Insert(objCollection[arrRecordKey2])
 	}
 	objCollectionSorted.SetCapacity(0) ; this reallocates the object's internal array to fit only its current content
@@ -820,7 +875,8 @@ CALL-FOR-HELP!
 	}
 	intEolReplacementAsciiCode := GetFirstUnusedAsciiCode(strCsvData) ; Usualy ¡ (inverted exclamation mark, ASCII 161)
 	blnInsideEncapsulators := false
-	Loop, Parse, strCsvData ; parsing on a temporary copy of strCsvData -  so we can update the original strCsvData inside the loop
+	Loop, Parse, strCsvData
+		; parsing on a temporary copy of strCsvData -  so we can update the original strCsvData inside the loop
 	{
 		if (blnProgress AND !Mod(A_Index, 5000))
 			Progress, %A_index% ;  update progress bar only every 5000 chars
@@ -857,7 +913,8 @@ Added the strEncapsulator parameter to make it work with other encapsultors than
    IfInString, F4C_String, %strEncapsulator% ; Check for encapsulator
    {
       Reformat:=True
-      StringReplace, F4C_String, F4C_String, %strEncapsulator%, %strEncapsulator%%strEncapsulator%, All ; The original encapsulator need to be double encapsulator
+      StringReplace, F4C_String, F4C_String, %strEncapsulator%, %strEncapsulator%%strEncapsulator%, All
+		; The original encapsulator need to be double encapsulator
    }
    If (Reformat)
       F4C_String= %strEncapsulator%%F4C_String%%strEncapsulator% ; If needed, bracket the string in encapsulators
@@ -969,7 +1026,8 @@ MakeXMLRow(objRow, strEndOfLine)
 {
 	strOutput := A_Tab . "<Record>" . strEndOfLine
 	for strFieldName, strValue in objRow
-		strOutput := strOutput . A_Tab . A_Tab . "<" . strFieldName .  ">" . strValue . "</" . strFieldName .  ">" . strEndOfLine
+		strOutput := strOutput . A_Tab . A_Tab . "<" . strFieldName .  ">" . strValue . "</" . strFieldName .  ">"
+			. strEndOfLine
 	strOutput := strOutput . A_Tab . "</Record>" . strEndOfLine
 	return %strOutput%
 }
