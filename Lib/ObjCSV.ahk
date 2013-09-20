@@ -30,7 +30,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder
 Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionnaly included in the CSV file. Delimiters are configurable.
 
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`r`n", strEolReplacement = ""])
-Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included in the file. Delimiters are configurable. Width are determined by the delimited string strWidth.
+Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included in the file. Delimiters are configurable. Widths are determined by the delimited string strWidth.
 
 ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, blnProgress = 0, blnOverwrite = 0, strEndOfLine = "`r`n"])
 Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
