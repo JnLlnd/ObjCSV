@@ -50,7 +50,7 @@ Sort the objectfs of a collection using one or multiple fields as sorting key.  
 
 DISCUSSION AND TUTORIAL
 
-A discussion on this library and tutorials can be found on the AutoHotkey forum:
-http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/
-http://www.autohotkey.com/board/topic/96619-objcsv-library-tutorial-basic/
-http://www.autohotkey.com/board/topic/97147-parsing-csv-files-with-multi-line-fields/
+A discussion on this library and tutorials can be found on the AutoHotkey forum:  
+http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/  
+http://www.autohotkey.com/board/topic/96619-objcsv-library-tutorial-basic/  
+http://www.autohotkey.com/board/topic/97147-parsing-csv-files-with-multi-line-fields/  
