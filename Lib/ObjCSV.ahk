@@ -18,7 +18,7 @@ You can use the functions in this library by calling ObjCSV_FunctionName (no #In
 
 ;================================================
 /* VERSIONS HISTORY
-0.2.5  2013-09-25  Optimize progress bars refresh rates
+0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML), optimize progress bars refresh rates
 0.2.4  2013-09-25  Fix a bug adding progress bar in ObjCSV_ListView2Collection
 0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of code
 0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML (ObjCSV_Collection2XML)
@@ -275,7 +275,11 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 	{
 		strRecord := "" ; line to add to the CSV file
 		if (blnProgress) and !Mod(A_index, intProgressBatchSize)
+		{
 			Progress, %A_index% ;  update progress bar only every %intProgressBatchSize% records
+			FileAppend, %strData%, %strFilePath%
+			strData := ""
+		}
 		if StrLen(strFieldOrder) ;  we put only these fields, in this order
 		{
 			intLineNumber := A_Index
@@ -385,11 +389,17 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 		}
 		strData := strHeaderFixed . strEndOfLine ; put this header as first line of the file
 	}
+	if (blnOverwrite)
+		FileDelete, %strFilePath%
 	Loop, %intMax% ; for each record in the collection
 	{
 		strRecord := "" ; line to add to the file
 		if (blnProgress) and !Mod(A_index, intProgressBatchSize)
+		{
 			Progress, %A_index% ;  update progress bar only every %intProgressBatchSize% records
+			FileAppend, %strData%, %strFilePath%
+			strData := ""
+		}
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
 			intLineNumber := A_Index
@@ -417,8 +427,6 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 		}
 		strData := strData . strRecord . strEndOfLine ; add record to the file
 	}
-	if (blnOverwrite)
-		FileDelete, %strFilePath%
 	FileAppend, %strData%, %strFilePath%
 	if (blnProgress)
 		Progress, Off
@@ -499,16 +507,21 @@ Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (ca
 	intProgressBatchSize := Round(intMax / 50)
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
+	if (blnOverwrite)
+		FileDelete, %strFilePath% ; delete existing file if present, no error if missing
 	Loop, %intMax% ; for each record in the collection
 	{
 		if (blnProgress) and !Mod(A_Index, intProgressBatchSize)
-			Progress, %A_Index% ;  update progress bar only every %intProgressBatchSize% records
+		{
+			Progress, %A_index% ;  update progress bar only every %intProgressBatchSize% records
+			FileAppend, %strData%, %strFilePath%
+			strData := ""
+		}
 		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) 
 			. strEndOfLine ; replace variables in the row template and append to the HTML data string
 	}
 	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator)
 		; replace variables in the footer template and append to the HTML data string
-	FileDelete, %strFilePath% ; delete existing file if present, no error if missing
 	FileAppend, %strData%, %strFilePath%
 	if (blnProgress)
 		Progress, Off
@@ -563,15 +576,20 @@ Optional. Character(s) inserted at end-of-lines. Can be `r`n (carriage return+li
 	intProgressBatchSize := Round(intMax / 50)
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
+	if (blnOverwrite)
+		FileDelete, %strFilePath% ; delete existing file if present, no error if missing
 	Loop, %intMax% ; for each record in the collection
 	{
 		if (blnProgress) and !Mod(A_index, intProgressBatchSize)
+		{
 			Progress, %A_index% ;  update progress bar only every %intProgressBatchSize% records
+			FileAppend, %strData%, %strFilePath%
+			strData := ""
+		}
 		strData := strData . MakeXMLRow(objCollection[A_Index], strEndOfLine)
 			; append XML for this row to the XML data string
 	}
 	strData := strData . "</XMLExport>" . strEndOfLine ; append XML footer to the XML data string
-	FileDelete, %strFilePath% ; delete existing file if present, no error if missing
 	FileAppend, %strData%, %strFilePath%
 	if (blnProgress)
 		Progress, Off
