@@ -1,8 +1,8 @@
 ;===============================================
-/* ObjCSV Library v0.2.3
+/* ObjCSV Library v0.2.4
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
-2013-09-20
+2013-09-25
 */
 
 ;================================================
@@ -18,6 +18,7 @@ You can use the functions in this library by calling ObjCSV_FunctionName (no #In
 
 ;================================================
 /* VERSIONS HISTORY
+0.2.4  2013-09-25  Fix a bug adding progress bar in ObjCSV_ListView2Collection
 0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of code
 0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML (ObjCSV_Collection2XML)
 0.1.3  2013-09-08  Multi-line replacement character at load time in ObjCSV_CSV2Collection
@@ -120,7 +121,7 @@ Optional. Character (or string) that will be converted to line-breaks if found i
 	{
 		intMaxProgress := StrLen(strData)
 		intProgress := 0
-		Progress, R0-%intMaxProgress% FS8 A, Loading CSV data..., , , MS Sans Serif
+		Progress, R0-%intMaxProgress% FS8 A, Reading CSV data..., , , MS Sans Serif
 	}
 	Loop, Parse, strData, %strRecordDelimiter%, %strOmitChars% ; read each line (record) of the CSV file
 	{
@@ -490,8 +491,8 @@ Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (ca
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
 	Loop, %intMax% ; for each record in the collection
 	{
-		if (blnProgress) and !Mod(%A_index%, 5000)
-			Progress, %A_index%
+		if (blnProgress) and !Mod(%A_Index%, 5000)
+			Progress, %A_Index%
 		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) 
 			. strEndOfLine ; replace variables in the row template and append to the HTML data string
 	}
@@ -703,10 +704,18 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 		Gui, ListView, %strListViewID%
 	intNbCols := LV_GetCount("Column") ; get the number of columns in the ListView
 	intNbRows := LV_GetCount() ; get the number of lines in the ListView
-	blnSelected := (LV_GetCount("Selected") > 0) ; we will read only selected rows
+	intNbRowsSelected := LV_GetCount("Selected")
+	blnSelected := (intNbRowsSelected > 0) ; we will read only selected rows
+	if (blnProgress)
+		if (blnSelected)
+			Progress, R0-%intNbRowsSelected% FS8 A, Reading data from ListView..., , , MS Sans Serif
+		else
+			Progress, R0-%intNbRows% FS8 A, Reading data from ListView..., , , MS Sans Serif
 	objHeaderPositions := Object()
 		; holds the keys (fields name) of the objects in the collection and their position in the ListView
 	; build an object array with field names and their position in the ListView header
+	if (blnProgress)
+		Progress, R0-%intNbRows% FS8 A, Reading data from ListView..., , , MS Sans Serif
 	loop, %intNbCols%
 	{
 		LV_GetText(strFieldHeader, 0, A_Index)
@@ -725,6 +734,8 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	intRowNumber := 0 ; scan each row or selected row of the ListView
 	Loop
 	{
+		if (blnProgress) and !Mod(%A_index%, 5000)
+			Progress, %A_Index%
 		if (blnSelected)
 			intRowNumber := LV_GetNext(intRowNumber) ; get next selected row number
 		else
@@ -742,6 +753,8 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 		}
 		objCollection.Insert(objData)
 	}
+	if (blnProgress)
+		Progress, Off
 	objCollection.SetCapacity(0) ; This reallocates the object's internal array to fit only its current content
 	objHeaderPositions := ; release object
 	return objCollection
