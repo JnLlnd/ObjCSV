@@ -18,6 +18,7 @@ You can use the functions in this library by calling ObjCSV_FunctionName (no #In
 
 ;================================================
 /* VERSIONS HISTORY
+0.2.5  2013-09-25  Optimize progress bars refresh rates
 0.2.4  2013-09-25  Fix a bug adding progress bar in ObjCSV_ListView2Collection
 0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of code
 0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML (ObjCSV_Collection2XML)
@@ -120,15 +121,21 @@ Optional. Character (or string) that will be converted to line-breaks if found i
 	if (blnProgress)
 	{
 		intMaxProgress := StrLen(strData)
+		intProgressBatchSize := Round(intMaxProgress / 50)
 		intProgress := 0
+		intProgressThisBatch := 0
 		Progress, R0-%intMaxProgress% FS8 A, Reading CSV data..., , , MS Sans Serif
 	}
 	Loop, Parse, strData, %strRecordDelimiter%, %strOmitChars% ; read each line (record) of the CSV file
 	{
 		intProgress := intProgress + StrLen(A_LoopField) + 2
+		intProgressThisBatch := intProgressThisBatch + StrLen(A_LoopField) + 2
 			; for Progress bar, augment intProgress of len of line + 2 for cr-lf 
-		if (blnProgress AND !Mod(intProgress, 5000))
-			Progress, %intProgress% ;  update progress bar only every 5000 chars
+		if (blnProgress AND (intProgressThisBatch > intProgressBatchSize))
+		{
+			Progress, %intProgress% ;  update progress bar only every %intProgressBatchSize% chars
+			intProgressThisBatch := 0
+		}
 		if (A_Index = 1) and (blnHeader) ; we have an header to read
 		{
 			objHeader := ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
@@ -192,7 +199,7 @@ Optional. Character (or string) that will be converted to line-breaks if found i
 		}
 	}
 	objCollection.SetCapacity(0) ; reallocates the object's internal array to fit only its current content
-	if (intMaxProgress)
+	if (blnProgress)
 		Progress, Off
 	objHeader := ; release object
 	return objCollection
@@ -246,6 +253,7 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 {
 	strData := ""
 	intMax := objCollection.MaxIndex()
+	intProgressBatchSize := Round(intMax / 50)
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to CSV file..., , , MS Sans Serif
 	if (blnHeader) ; put the field names (header) in the first line of the CSV file
@@ -261,11 +269,13 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 		}
 		strData := strFieldOrder . strEndOfLine ; put this header as first line of the file
 	}
+	if (blnOverwrite)
+		FileDelete, %strFilePath%
 	Loop, %intMax% ; for each record in the collection
 	{
 		strRecord := "" ; line to add to the CSV file
-		if (blnProgress) and !Mod(%A_index%, 5000)
-			Progress, %A_index%
+		if (blnProgress) and !Mod(A_index, intProgressBatchSize)
+			Progress, %A_index% ;  update progress bar only every %intProgressBatchSize% records
 		if StrLen(strFieldOrder) ;  we put only these fields, in this order
 		{
 			intLineNumber := A_Index
@@ -289,8 +299,6 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 		StringTrimRight, strRecord, strRecord, 1 ; remove extra field delimiter
 		strData := strData . strRecord . strEndOfLine
 	}
-	if (blnOverwrite)
-		FileDelete, %strFilePath%
 	FileAppend, %strData%, %strFilePath%
 	if (blnProgress)
 		Progress, Off
@@ -350,6 +358,7 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 		; get width for each field in the pseudo-array arrIntWidth, so %arrIntWidth1% or arrIntWidth%intColIndex%
 	strData := "" ; string to save in the fixed-width file
 	intMax := objCollection.MaxIndex()
+	intProgressBatchSize := Round(intMax / 50)
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
 	if (blnHeader) ; put the field names (header) in the first line of the file
@@ -379,8 +388,8 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 	Loop, %intMax% ; for each record in the collection
 	{
 		strRecord := "" ; line to add to the file
-		if (blnProgress) and !Mod(%A_index%, 5000)
-			Progress, %A_index%
+		if (blnProgress) and !Mod(A_index, intProgressBatchSize)
+			Progress, %A_index% ;  update progress bar only every %intProgressBatchSize% records
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
 			intLineNumber := A_Index
@@ -487,12 +496,13 @@ Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (ca
 	strData := MakeHTMLHeaderFooter(strTemplateHeader, strFilePath, strTemplateEncapsulator)
 		; replace variables in the header template and initialize the HTML data string
 	intMax := objCollection.MaxIndex()
+	intProgressBatchSize := Round(intMax / 50)
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
 	Loop, %intMax% ; for each record in the collection
 	{
-		if (blnProgress) and !Mod(%A_Index%, 5000)
-			Progress, %A_Index%
+		if (blnProgress) and !Mod(A_Index, intProgressBatchSize)
+			Progress, %A_Index% ;  update progress bar only every %intProgressBatchSize% records
 		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) 
 			. strEndOfLine ; replace variables in the row template and append to the HTML data string
 	}
@@ -550,12 +560,13 @@ Optional. Character(s) inserted at end-of-lines. Can be `r`n (carriage return+li
 	strData := "<?xml version='1.0'?>" . strEndOfLine . "<XMLExport>" . strEndOfLine
 		; initialize the XML data string with XML header
 	intMax := objCollection.MaxIndex()
+	intProgressBatchSize := Round(intMax / 50)
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Saving data to export file..., , , MS Sans Serif
 	Loop, %intMax% ; for each record in the collection
 	{
-		if (blnProgress) and !Mod(%A_index%, 5000)
-			Progress, %A_index%
+		if (blnProgress) and !Mod(A_index, intProgressBatchSize)
+			Progress, %A_index% ;  update progress bar only every %intProgressBatchSize% records
 		strData := strData . MakeXMLRow(objCollection[A_Index], strEndOfLine)
 			; append XML for this row to the XML data string
 	}
@@ -614,6 +625,7 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	if StrLen(strSortFields)
 		objCollection := ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions, blnProgress)
 	intMax := objCollection.MaxIndex()
+	intProgressBatchSize := Round(intMax / 50)
 	if (blnProgress)
 		Progress, R0-%intMax% FS8 A, Loading data to ListView..., , , MS Sans Serif
 	if StrLen(strGuiID)
@@ -645,8 +657,8 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	}
 	loop, %intMax%
 	{
-		if (blnProgress) and !Mod(%A_index%, 5000)
-			Progress, %A_Index%
+		if (blnProgress) and !Mod(A_index, intProgressBatchSize)
+			Progress, %A_Index% ;  update progress bar only every %intProgressBatchSize% records
 		intRowNumber := A_Index
 		arrFields := Array() ; will contain the values for each cell of a new row
 		for intIndex, strFieldName in objHeader
@@ -708,9 +720,15 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	blnSelected := (intNbRowsSelected > 0) ; we will read only selected rows
 	if (blnProgress)
 		if (blnSelected)
+		{
+			intProgressBatchSize := Round(intNbRowsSelected / 50)
 			Progress, R0-%intNbRowsSelected% FS8 A, Reading data from ListView..., , , MS Sans Serif
+		}
 		else
+		{
+			intProgressBatchSize := Round(intNbRows / 50)
 			Progress, R0-%intNbRows% FS8 A, Reading data from ListView..., , , MS Sans Serif
+		}
 	objHeaderPositions := Object()
 		; holds the keys (fields name) of the objects in the collection and their position in the ListView
 	; build an object array with field names and their position in the ListView header
@@ -734,8 +752,8 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	intRowNumber := 0 ; scan each row or selected row of the ListView
 	Loop
 	{
-		if (blnProgress) and !Mod(%A_index%, 5000)
-			Progress, %A_Index%
+		if (blnProgress) and !Mod(A_index, intProgressBatchSize)
+			Progress, %A_Index% ;  update progress bar only every %intProgressBatchSize% records
 		if (blnSelected)
 			intRowNumber := LV_GetNext(intRowNumber) ; get next selected row number
 		else
@@ -790,6 +808,7 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	objCollectionSorted.SetCapacity(objCollection.MaxIndex())
 	strIndexDelimiter := "|" ;
 	intTotalRecords := objCollection.MaxIndex()
+	intProgressBatchSize := Round(intTotalRecords / 50)
 	if (blnProgress)
 		Progress, R0-%intTotalRecords% FS8 A, Sorting data..., , , MS Sans Serif
 	strIndex := ""
@@ -814,8 +833,8 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	Loop, %intTotalRecords% ; populate index substrings
 	{
 		intRecordNumber := A_Index
-		if (blnProgress) and !Mod(%A_index%, 5000)
-			Progress, %A_Index%
+		if (blnProgress) and !Mod(A_index, intProgressBatchSize)
+			Progress, %A_Index% ;  update progress bar only every %intProgressBatchSize% records
 		if InStr(strSortFields, "+")
 		{
 			strSortingValue := ""
@@ -883,16 +902,17 @@ CALL-FOR-HELP!
 {
 	if (blnProgress)
 	{
-		intProgress := StrLen(strCsvData)
-		Progress, R0-%intProgress% FS8 A, Preparing CSV data for loading..., , , MS Sans Serif
+		intMaxProgress := StrLen(strCsvData)
+		intProgressBatchSize := Round(intMaxProgress / 50)
+		Progress, R0-%intMaxProgress% FS8 A, Preparing CSV data for loading..., , , MS Sans Serif
 	}
 	intEolReplacementAsciiCode := GetFirstUnusedAsciiCode(strCsvData) ; Usualy ¡ (inverted exclamation mark, ASCII 161)
 	blnInsideEncapsulators := false
 	Loop, Parse, strCsvData
 		; parsing on a temporary copy of strCsvData -  so we can update the original strCsvData inside the loop
 	{
-		if (blnProgress AND !Mod(A_Index, 5000))
-			Progress, %A_index% ;  update progress bar only every 5000 chars
+		if (blnProgress AND !Mod(A_Index, intProgressBatchSize))
+			Progress, %A_index% ;  update progress bar only every %intProgressBatchSize% chars
 		if (A_Index = 1)
 			strCsvData := ""
 		if (blnInsideEncapsulators AND A_Loopfield = "`n")
