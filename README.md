@@ -1,6 +1,5 @@
-ObjCSV Library v0.1 - Library to load and save CSV files to/from objects and ListView
+ObjCSV Library - Library to load and save CSV files to/from objects and ListView
 ------------------------------------------------------------------------
-ObjCSV Library v0.1
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 2013-08-22+
@@ -21,9 +20,6 @@ Other usages:
 
 The most up-to-date version of this library can be found on GitHub:
 https://github.com/JnLlnd/ObjCSV
-
-Demo and tutorail on how to use this library can be found here:
-(URL to come)
 
 INSTRUCTIONS
 
@@ -54,6 +50,7 @@ Sort the objectfs of a collection using one or multiple fields as sorting key.  
 
 DISCUSSION AND TUTORIAL
 
-A discussion on this library and a tutorial can be found on the AutoHotkey forum:
-http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/
-http://www.autohotkey.com/board/topic/96619-objcsv-library-tutorial-basic/
+A discussion on this library and tutorials can be found on the AutoHotkey forum:  
+http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/  
+http://www.autohotkey.com/board/topic/96619-objcsv-library-tutorial-basic/  
+http://www.autohotkey.com/board/topic/97147-parsing-csv-files-with-multi-line-fields/  
