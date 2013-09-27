@@ -1,5 +1,5 @@
 ;===============================================
-/* ObjCSV Library v0.2.4
+/* ObjCSV Library v0.2.5
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 2013-09-25
