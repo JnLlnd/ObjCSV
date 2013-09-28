@@ -32,9 +32,9 @@ The most up-to-date version of this library can be found on GitHub:
 INSTRUCTIONS
 
 Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:
-  %A_ScriptDir%\Lib\
-  %A_MyDocuments%\AutoHotkey\Lib\
-  [path to the currently running AutoHotkey_L.exe]\Lib\ (AutoHotKey_L can be downloaded here: http://l.autohotkey.net/ )
+  * %A_ScriptDir%\Lib\
+  * %A_MyDocuments%\AutoHotkey\Lib\
+  * [path to the currently running AutoHotkey_L.exe]\Lib\
 
 You can use the functions in this library by calling ObjCSV_FunctionName. No #Include required!
 
