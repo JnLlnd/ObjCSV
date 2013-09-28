@@ -1,0 +1,62 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>ObjCSV_Collection2CSV()</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="default.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<h1>ObjCSV_Collection2CSV()</h1>
+<p>Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.</p>
+
+<pre class="Syntax">ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = &quot;&quot;, blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strEndOfLine = &quot;`r`n&quot;, strEolReplacement = &quot;&quot;])</pre>
+<h3>Parameters</h4>
+<table class="info">
+<tr>
+  <td width="15%">objCollection</td>
+  <td width="85%">Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.</td>
+</tr>
+<tr>
+  <td width="15%">strFilePath</td>
+  <td width="85%">The name of the CSV file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.</td>
+</tr>
+<tr>
+  <td width="15%">blnHeader</td>
+  <td width="85%">(Optional) If true, the key names in the collection objects are inserted as header of the CSV file. Fields names are delimited by the strFieldDelimiter character.</td>
+</tr>
+<tr>
+  <td width="15%">strFieldOrder</td>
+  <td width="85%">(Optional) List of field to include in the CSV file and the order of these fields in the file. Fields names must be separated by the strFieldDelimiter character and, if required, encapsulated by the strEncapsulator character. If empty, all fields are included. Empty by default.</td>
+</tr>
+<tr>
+  <td width="15%">blnProgress</td>
+  <td width="85%">(Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.</td>
+</tr>
+<tr>
+  <td width="15%">blnOverwrite</td>
+  <td width="85%">(Optional) If true (or 1), overwrite existing files. If false (or 0), content is appended to the existing file. False (or 0) by default. NOTE: If content is appended to an existing file, fields names and order should be the same as in the existing file.</td>
+</tr>
+<tr>
+  <td width="15%">strFieldDelimiter</td>
+  <td width="85%">(Optional) Delimiter inserted between fields in the CSV file. Also used as delimiter in the above parameter strFieldOrder. One character, usually comma, tab or semi-colon. You can choose other delimiters like pipe (|), space, etc. Comma by default. NOTE: End of line characters (<code>n or </code>r) are prohibited as field separator since they are used as record delimiters.</td>
+</tr>
+<tr>
+  <td width="15%">strEncapsulator</td>
+  <td width="85%">(Optional) One character (usualy double-quote) inserted in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: &quot;one &quot;&quot;quoted&quot;&quot; word&quot;. Double-quote by default.</td>
+</tr>
+<tr>
+  <td width="15%">strEndOfLine</td>
+  <td width="85%">(Optional) Character(s) inserted between records at end-of-lines. Can be <code>r</code>n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.</td>
+</tr>
+<tr>
+  <td width="15%">strEolReplacement</td>
+  <td width="85%">(Optional) When empty, multi-line fields are saved unchanged. If not empty, end-of-line in multi-line fields are replaced by the character or string strEolReplacement. Empty by default. NOTE: Strings including replaced end-of-line will still be encapsulated with the strEncapsulator character.</td>
+</tr>
+</table>
+<h3>Returns</h3>
+<p>None.</p>
+
+</body>
+</html>

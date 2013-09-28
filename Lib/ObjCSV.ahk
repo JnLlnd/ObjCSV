@@ -1,113 +1,61 @@
-;===============================================
-/* ObjCSV Library v0.2.5
-Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
-By JnLlnd on AHK forum
-2013-09-25
+/*!
+	Library: ObjCSV Library
+		AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type.  
+		  
+		* Read and save files in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.).
+		* Display, edit and read Collections in GUI ListView objects.
+		* Export Collection to fixed-width, HTML or XML files.
+		  
+		For more info on CSV files, see [http://en.wikipedia.org/wiki/Comma-separated_values](http://en.wikipedia.org/wiki/Comma-separated_values).  
+		  
+		Written by Jean Lalonde ([JnLlnd](http://www.autohotkey.com/board/user/4880-jnllnd/) on AHK forum) using AutoHotkey_L v1.1.09.03+ ([http://l.autohotkey.net/](http://l.autohotkey.net/))  
+		
+		### INSTRUCTIONS
+			Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:
+				* %A_ScriptDir%\Lib\
+				* %A_MyDocuments%\AutoHotkey\Lib\
+				* \[path to the currently running AutoHotkey_L.exe]\Lib\ (AutoHotKey_L can be downloaded here: [http://l.autohotkey.net/](http://l.autohotkey.net/))
+			  
+			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
+		  
+		### VERSIONS HISTORY
+			0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML), optimize progress bars refresh rates  
+			0.2.4  2013-09-25  Fix a bug adding progress bar in ObjCSV_ListView2Collection  
+			0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of code  
+			0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML (ObjCSV_Collection2XML)  
+			0.1.3  2013-09-08  Multi-line replacement character at load time in ObjCSV_CSV2Collection  
+			0.1.2  2013-09-05  Standardize boolean parameters to 0/1 (not True/False) and without double-quotes  
+			0.1.1  2013-08-26  First release
+
+	Author: By Jean Lalonde
+	Version: v0.2.5a
 */
-
-;================================================
-/* INSTRUCTIONS
-Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:
-  %A_ScriptDir%\Lib\
-  %A_MyDocuments%\AutoHotkey\Lib\
-  [path to the currently running AutoHotkey_L.exe]\Lib\ (AutoHotKey_L can be downloaded here: http://l.autohotkey.net/ )
-
-You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
-================================================
-*/
-
-;================================================
-/* VERSIONS HISTORY
-0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML), optimize progress bars refresh rates
-0.2.4  2013-09-25  Fix a bug adding progress bar in ObjCSV_ListView2Collection
-0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of code
-0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML (ObjCSV_Collection2XML)
-0.1.3  2013-09-08  Multi-line replacement character at load time in ObjCSV_CSV2Collection
-0.1.2  2013-09-05  Standardize boolean parameters to 0/1 (not True/False) and without double-quotes
-0.1.1  2013-08-26  First release
-================================================
-*/
-
-;===============================================
-/* FUNCTIONS QUICK REFERENCE
-AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type.
-Files can be read and saved in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.).
-Collections can also be displayed, edited and read in GUI ListView objects.
-For more info on CSV files, see http://en.wikipedia.org/wiki/Comma-separated_values.
-
-ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, blnProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r", strEolReplacement = ""])
-Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNames parameter. Delimiters are configurable.
-
-ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`r`n", strEolReplacement = ""])
-Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionnaly included in the CSV file. Delimiters are configurable.
-
-ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`r`n", strEolReplacement = ""])
-Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included in the file. Delimiters are configurable. Width are determined by the delimited string strWidth.
-
-ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, blnProgress = 0, blnOverwrite = 0, strEndOfLine = "`r`n"])
-Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
-
-ObjCSV_Collection2XML(objCollection, strFilePath [, blnProgress = 0, blnOverwrite = 0, strEndOfLine = "`r`n"])
-Builds an XML file from the content of the collection. The calling script must ensure that field names and field data comply with the rules of XML syntax.
-
-ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", blnProgress = 0])
-Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView.
-
-ObjCSV_ListView2Collection([strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", blnProgress = 0])
-Transfer the selected lines of the selected columns of a ListView to a collection of objects. Lines are transfered in the order they appear in the ListView. Column headers are used as objects keys.
-
-ObjCSV_SortCollection(objCollection, strSortFields [, strSortOptions = "", blnProgress = 0])
-Sort the objectfs of a collection using one or multiple fields as sorting key.  Internal AHK Sort options are supported.
-
-See details for each fucntions below.
-
-===============================================
-*/
-
-
 
 ;================================================
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, blnProgress := 0
 	, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r"
 	, strEolReplacement := "")
-/*
-Summary: Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by the ByRef variable strFieldNames. Delimiters are configurable.
+/*!
+	Function: ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, blnProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r", strEolReplacement = ""])
+		Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by the ByRef variable strFieldNames. Delimiters are configurable.
 
-RETURNED VALUES:
-This functions returns an object that contains an array of objects. This collection of objects can be viewed as a table in a database. Each object in the collection is like a record (or a line) in a table. These records are, in fact, associative arrays which contain a list key-value pairs. Key names are like field names (or column names) in the table. Key names are taken in the header of the CSV file, if it exists. Keys can be strings or integers, while values can be of any type that can be expressed as text. The records can be read using the syntax obj[1], obj[2] (...). Field values can be read using the syntax obj[1].keyname or, when field names contain spaces, obj[1]["key name"]. The "Loop, Parse" and "For key, value in array" commands allow to easily browse the content of these objects.
-If blnHeader is true (or 1), the ByRef variable strFieldNames returns a string containing the field names (object keys) read from the first line of the CSV file, in the format and in the order they appear in the file. If a field name is empty, it is replaced with "Empty_" and its field number.  If a field name is duplicated, the field number is added to the duplicate name.  If blnHeader is false (or 0), the value of strFieldNames is unchanged by the function.
+	Parameters:
+		strFilePath - Path of the file to load, which is assumed to be in A_WorkingDir if an absolute path isn't specified.
+		strFieldNames - (ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, column numbers are used as object keys, starting at 1. Empty by default. Output: See RETURNED VALUES above.
+		blnHeader - (Optional) If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True (or 1) by default.
+		blnMultiline - (Optional) If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE-1: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details). NOTE-2: If blnMultiline is True, you can use the strEolReplacement parameter to specify a character (or string) that will be converted to line-breaks if found in the CSV file.
+		blnProgress - (Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+		strFieldDelimiter - (Optional) Field delimiter in the CSV file. One character, usually comma (default value) or tab. According to locale setting of software (e.g. MS Office) or user preferences, delimiter can be semi-colon (;), pipe (|), space, etc. NOTE-1: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters. NOTE-2: Using the Trim function, %A_Space% and %A_Tab% (when tab is not a delimiter) are removed from the beginning and end of all field names and data.
+		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". All fields and headers in the CSV file can be encapsulated, if desired by the file creator. Double-quote by default.
+		strRecordDelimiter - (Optional) Record delimiter in the CSV file. Rarely modified. Default value is end-of-line (`n).
+		strOmitChars - (Optional) List of characters (case sensitive) to exclude from beginning and end of lines. By default `r (carriage return) to support text files with both `r`n (carriage return+linefeed) and `n (linefeed) end-of-lines.
+		strEolReplacement - (Optional) Character (or string) that will be converted to line-breaks if found in the CSV file. Replacements occur only when blnMultiline is True. Empty by default.
 
-PARAMETERS:
-strFilePath:
-Path of the file to load, which is assumed to be in A_WorkingDir if an absolute path isn't specified.
+	Returns:
+		This functions returns an object that contains an array of objects. This collection of objects can be viewed as a table in a database. Each object in the collection is like a record (or a line) in a table. These records are, in fact, associative arrays which contain a list key-value pairs. Key names are like field names (or column names) in the table. Key names are taken in the header of the CSV file, if it exists. Keys can be strings or integers, while values can be of any type that can be expressed as text. The records can be read using the syntax obj[1], obj[2] (...). Field values can be read using the syntax obj[1].keyname or, when field names contain spaces, obj[1]["key name"]. The "Loop, Parse" and "For key, value in array" commands allow to easily browse the content of these objects.
+		
+		If blnHeader is true (or 1), the ByRef variable strFieldNames returns a string containing the field names (object keys) read from the first line of the CSV file, in the format and in the order they appear in the file. If a field name is empty, it is replaced with "Empty_" and its field number.  If a field name is duplicated, the field number is added to the duplicate name.  If blnHeader is false (or 0), the value of strFieldNames is unchanged by the function.
 
-ByRef strFieldNames
-Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, column numbers are used as object keys, starting at 1. Empty by default.
-Output: See RETURNED VALUES above.
-
-blnHeader := 1
-Optional. If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True (or 1) by default.
-
-blnMultiline := 1
-Optional. If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE-1: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details). NOTE-2: If blnMultiline is True, you can use the strEolReplacement parameter to specify a character (or string) that will be converted to line-breaks if found in the CSV file.
-
-blnProgress := 0
-Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
-
-strFieldDelimiter := ","
-Optional. Field delimiter in the CSV file. One character, usually comma (default value) or tab. According to locale setting of software (e.g. MS Office) or user preferences, delimiter can be semi-colon (;), pipe (|), space, etc. NOTE-1: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters. NOTE-2: Using the Trim function, %A_Space% and %A_Tab% (when tab is not a delimiter) are removed from the beginning and end of all field names and data.
-
-strEncapsulator := """"
-Optional. Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". All fields and headers in the CSV file can be encapsulated, if desired by the file creator. Double-quote by default.
-
-strRecordDelimiter := "`n"
-Optional. Record delimiter in the CSV file. Rarely modified. Default value is end-of-line (`n).
-
-strOmitChars := "`r"
-Optional. List of characters (case sensitive) to exclude from beginning and end of lines. By default `r (carriage return) to support text files with both `r`n (carriage return+linefeed) and `n (linefeed) end-of-lines.
-
-strEolReplacement := ""
-Optional. Character (or string) that will be converted to line-breaks if found in the CSV file. Replacements occur only when blnMultiline is True. Empty by default.
 */
 {
 	objCollection := Object() ; object that will be returned by the function (a collection or array of objects)
@@ -183,8 +131,8 @@ Optional. Character (or string) that will be converted to line-breaks if found i
 						using ObjCSV_Collection2CSV and opened in Notepad. However, %strRecordDelimiter% seems
 						to work well in the previous command... Anyway, for safety (at least in the Windows
 						environment), I replaced it with `r`n in the next command.
-						For reference, see http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/
-						and http://peterbenjamin.com/seminars/crossplatform/texteol.html
+						For reference, see [http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/](http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/)
+						and [http://peterbenjamin.com/seminars/crossplatform/texteol.html](http://peterbenjamin.com/seminars/crossplatform/texteol.html)
 						*/
 					StringReplace, strFieldData, strFieldData, %strEolReplacement%, `r`n, 1
 						; replace all user-supplied replacement character with end-of-line, if present
@@ -212,43 +160,24 @@ Optional. Character (or string) that will be converted to line-breaks if found i
 ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", blnProgress := 0
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n"
 	, strEolReplacement := "")
-/*
-Summary: Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.
+/*!
+	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`r`n", strEolReplacement = ""])
+		Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.
 
-RETURNED VALUE:
-None.
+	Parameters:
+		objCollection - Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
+		strFilePath - The name of the CSV file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
+		blnHeader - (Optional) If true, the key names in the collection objects are inserted as header of the CSV file. Fields names are delimited by the strFieldDelimiter character.
+		strFieldOrder - (Optional) List of field to include in the CSV file and the order of these fields in the file. Fields names must be separated by the strFieldDelimiter character and, if required, encapsulated by the strEncapsulator character. If empty, all fields are included. Empty by default.
+		blnProgress - (Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0), content is appended to the existing file. False (or 0) by default. NOTE: If content is appended to an existing file, fields names and order should be the same as in the existing file.
+		strFieldDelimiter - (Optional) Delimiter inserted between fields in the CSV file. Also used as delimiter in the above parameter strFieldOrder. One character, usually comma, tab or semi-colon. You can choose other delimiters like pipe (|), space, etc. Comma by default. NOTE: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters.
+		strEncapsulator - (Optional) One character (usualy double-quote) inserted in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
+		strEndOfLine - (Optional) Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
+		strEolReplacement - (Optional) When empty, multi-line fields are saved unchanged. If not empty, end-of-line in multi-line fields are replaced by the character or string strEolReplacement. Empty by default. NOTE: Strings including replaced end-of-line will still be encapsulated with the strEncapsulator character.
 
-PARAMETERS:
-
-objCollection
-Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
-
-strFilePath
-The name of the CSV file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
-
-blnHeader := 0
-Optional. If true, the key names in the collection objects are inserted as header of the CSV file. Fields names are delimited by the strFieldDelimiter character.
-
-strFieldOrder := ""
-Optional. List of field to include in the CSV file and the order of these fields in the file. Fields names must be separated by the strFieldDelimiter character and, if required, encapsulated by the strEncapsulator character. If empty, all fields are included. Empty by default.
-
-blnProgress := 0
-Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
-
-blnOverwrite := 0
-Optional. If true (or 1), overwrite existing files. If false (or 0), content is appended to the existing file. False (or 0) by default. NOTE: If content is appended to an existing file, fields names and order should be the same as in the existing file.
-
-strFieldDelimiter := ","
-Optional. Delimiter inserted between fields in the CSV file. Also used as delimiter in the above parameter strFieldOrder. One character, usually comma, tab or semi-colon. You can choose other delimiters like pipe (|), space, etc. Comma by default. NOTE: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters.
-
-strEncapsulator := """"
-Optional. One character (usualy double-quote) inserted in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
-
-strEndOfLine := "`r`n"
-Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
-
-strEolReplacement := ""
-Optional. When empty, multi-line fields are saved unchanged. If not empty, end-of-line in multi-line fields are replaced by the character or string strEolReplacement. Empty by default. NOTE: Strings including replaced end-of-line will still be encapsulated with the strEncapsulator character.
+	Returns:
+		None.
 */
 {
 	strData := ""
@@ -316,46 +245,25 @@ Optional. When empty, multi-line fields are saved unchanged. If not empty, end-o
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", blnProgress := 0
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n"
 	, strEolReplacement := "")
-/*
-Summary: Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
+/*!
+	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`r`n", strEolReplacement = ""])
+		Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
 
-RETURNED VALUE:
-None.
+	Parameters:
+		objCollection - Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
+		strFilePath - The name of the fixed-width destination file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
+		strWidth - Width for each field. Each numeric values must be in the same order as strFieldOrder and separated by the strFieldDelimiter character.
+		blnHeader - (Optional) If true, the field names in the collection objects are inserted as header of the file, padded or truncated according to each field's width. NOTE: If field names are longer than their fixed-width they will be truncated as well.
+		strFieldOrder - (Optional) List of field to include in the file and the order of these fields in the file. Fields names must be separated by the strFieldDelimiter character and, if required, encapsulated by the strEncapsulator character. If empty, all fields are included. Empty by default.
+		blnProgress - (Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0), content is appended to the existing file. False (or 0) by default. NOTE: If content is appended to an existing file, fields names and order should be the same as in the existing file.
+		strFieldDelimiter - (Optional) Delimiter inserted between fields names in the strFieldOrder parameter and fields width in the strWidth parameter. This delimiter is NOT used in the file data. One character, usually comma, tab or semi-colon. You can choose other delimiters like pipe (|), space, etc. Comma by default. NOTE: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters.
+		strEncapsulator - (Optional) One character (usualy double-quote) inserted in the strFieldOrder parameter to embed field names that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: "one ""quoted"" word". Double-quote by default. This delimiter is NOT used in the file data.
+		strEndOfLine - (Optional) Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
+		strEolReplacement - (Optional) A fixed-width file should not include end-of-line within data. If it does and if a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
 
-PARAMETERS:
-
-objCollection
-Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
-
-strFilePath
-The name of the fixed-width destination file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
-
-strWidth
-Width for each field. Each numeric values must be in the same order as strFieldOrder and separated by the strFieldDelimiter character.
-
-blnHeader := 0
-Optional. If true, the field names in the collection objects are inserted as header of the file, padded or truncated according to each field's width. NOTE: If field names are longer than their fixed-width they will be truncated as well.
-
-strFieldOrder := ""
-Optional. List of field to include in the file and the order of these fields in the file. Fields names must be separated by the strFieldDelimiter character and, if required, encapsulated by the strEncapsulator character. If empty, all fields are included. Empty by default.
-
-blnProgress := 0
-Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
-
-blnOverwrite := 0
-Optional. If true (or 1), overwrite existing files. If false (or 0), content is appended to the existing file. False (or 0) by default. NOTE: If content is appended to an existing file, fields names and order should be the same as in the existing file.
-
-strFieldDelimiter := ","
-Optional. Delimiter inserted between fields names in the strFieldOrder parameter and fields width in the strWidth parameter. This delimiter is NOT used in the file data. One character, usually comma, tab or semi-colon. You can choose other delimiters like pipe (|), space, etc. Comma by default. NOTE: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters.
-
-strEncapsulator := """"
-Optional. One character (usualy double-quote) inserted in the strFieldOrder parameter to embed field names that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: "one ""quoted"" word". Double-quote by default. This delimiter is NOT used in the file data.
-
-strEndOfLine := "`r`n"
-Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
-
-strEolReplacement := ""
-Optional. A fixed-width file should not include end-of-line within data. If it does and if a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
+	Returns:
+		None.
 */
 {
 	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter%
@@ -439,51 +347,38 @@ Optional. A fixed-width file should not include end-of-line within data. If it d
 ;================================================
 ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateEncapsulator := "~", blnProgress := 0
 	, blnOverwrite := 0, strEndOfLine := "`r`n")
-/*
-Summary: Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
+/*!
+	Function: ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, blnProgress = 0, blnOverwrite = 0, strEndOfLine = "`r`n"])
+		Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
 
-RETURNED VALUE:
-None.
+	Parameters:
+		objCollection - Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
+		strFilePath - The name of the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. This path and name of the file can be inserted in the HTML template as described below.
+		strTemplateFile - The name of the HTML template file used to create the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. In the template, markups and variables are encapsulated by the strTemplateEncapsulator parameter (single charater of your choice). Markups and variables are not case sensitive unless StringCaseSense has been turned on. The template is divided in three sections: the header template (from the start of the file to the start of the row template), the row template (delimited by the markups ROWS and /ROWS) and the footer template (from the end of the row template to the end of the file). The row template is repeated in the output file for each record in the collection. Field names encapsulated by the strTemplateEncapsulator parameter are replaced by the matching data in each record.  Additionally, in the header and footer, the following variables encapsulated by the strTemplateEncapsulator are replaced by parts of the strFilePath parameter: FILENAME (file name without its path, but including its extension), DIR (drive letter or share name, if present, and directory of the file, final backslash excluded), EXTENSION (file's extension, dot excluded), NAMENOEXT (file name without its path, dot and extension) and DRIVE (drive letter or server name, if present). Finally, in the row template, ROWNUMBER is replaced by the current row number. This simple example, where each record has two fields named "Field1" and "Field2" and the strTemplateEncapsulator is ~ (tilde), shows the use of the various markups and variables:
+			> <HEAD>
+			>   <TITLE>~NAMENOEXT~</TITLE>
+			> </HEAD>
+			> <BODY>
+			>   <H1>~FILENAME~</H1>
+			>   <TABLE>
+			>     <TR>
+			>       <TH>Row #</TH><TH>Field One</TH><TH>Field Two</TH>
+			>     </TR>
+			> ~ROWS~
+			>     <TR>
+			>       <TD>~ROWNUMBER~</TD><TD>~Field1~</TD><TD>~Field2~</TD>
+			>     </TR>
+			> ~/ROWS~
+			>   </TABLE>
+			>   Source: ~DIR~\~FILENAME~
+			> </BODY>
+		strTemplateEncapsulator - (Optional) One character used to encapsulate markups and variable names in the template. By default ~ (tilde).
+		blnProgress - (Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
+		strEndOfLine - (Optional) Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
 
-PARAMETERS:
-
-objCollection
-Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
-
-strFilePath
-The name of the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. This path and name of the file can be inserted in the HTML template as described below.
-
-strTemplateFile
-The name of the HTML template file used to create the HTML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified. In the template, markups and variables are encapsulated by the strTemplateEncapsulator parameter (single charater of your choice). Markups and variables are not case sensitive unless StringCaseSense has been turned on. The template is divided in three sections: the header template (from the start of the file to the start of the row template), the row template (delimited by the markups ROWS and /ROWS) and the footer template (from the end of the row template to the end of the file). The row template is repeated in the output file for each record in the collection. Field names encapsulated by the strTemplateEncapsulator parameter are replaced by the matching data in each record.  Additionally, in the header and footer, the following variables encapsulated by the strTemplateEncapsulator are replaced by parts of the strFilePath parameter: FILENAME (file name without its path, but including its extension), DIR (drive letter or share name, if present, and directory of the file, final backslash excluded), EXTENSION (file's extension, dot excluded), NAMENOEXT (file name without its path, dot and extension) and DRIVE (drive letter or server name, if present). Finally, in the row template, ROWNUMBER is replaced by the current row number. This simple example, where each record has two fields named "Field1" and "Field2" and the strTemplateEncapsulator is ~ (tilde), shows the use of the various markups and variables:
-		<HEAD>
-		<TITLE>~NAMENOEXT~</TITLE>
-		</HEAD>
-		<BODY>
-		<H1>~FILENAME~</H1>
-		<TABLE>
-		<TR>
-		<TH>Row #</TH><TH>Field One</TH><TH>Field Two</TH>
-		</TR>
-		~ROWS~
-		<TR>
-		<TD>~ROWNUMBER~</TD><TD>~Field1~</TD><TD>~Field2~</TD>
-		</TR>
-		~/ROWS~
-		</TABLE>
-		Source: ~DIR~\~FILENAME~
-		</BODY>
-
-strTemplateEncapsulator := "~"
-Optional. One character used to encapsulate markups and variable names in the template. By default ~ (tilde).
-
-blnProgress := 0
-Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
-
-blnOverwrite := 0
-Optional. If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
-
-strEndOfLine := "`r`n"
-Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
+	Returns:
+		None.
 */
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
@@ -531,41 +426,33 @@ Optional. Character(s) inserted between records at end-of-lines. Can be `r`n (ca
 
 
 
+
 ;================================================
 ObjCSV_Collection2XML(objCollection, strFilePath, blnProgress := 0, blnOverwrite := 0, strEndOfLine := "`r`n")
-/*
-Summary: Builds an XML file from the content of the collection. The calling script must ensure that field names and field data comply with the rules of XML syntax. This simple example, where each record has two fields named "Field1" and "Field2", shows the XML output format:
-		<?xml version='1.0'?>
-		<XMLExport>
-			<Record>
-				<Field1>Value Row 1 Col 1</Field1>
-				<Field2>Value Row 1 Col 2</Field1>
-			</Record>
-			<Record>
-				<Field1>Value Row 2 Col 1</Field1>
-				<Field2>Value Row 2 Col 2</Field1>
-			</Record>
-		</XMLExport>
+/*!
+	Function: ObjCSV_Collection2XML(objCollection, strFilePath [, blnProgress = 0, blnOverwrite = 0, strEndOfLine = "`r`n"])
+		Builds an XML file from the content of the collection. The calling script must ensure that field names and field data comply with the rules of XML syntax. This simple example, where each record has two fields named "Field1" and "Field2", shows the XML output format:
+			> <?xml version='1.0'?>
+			> <XMLExport>
+			>   <Record>
+			>     <Field1>Value Row 1 Col 1</Field1>
+			>     <Field2>Value Row 1 Col 2</Field1>
+			>   </Record>
+			>   <Record>
+			>     <Field1>Value Row 2 Col 1</Field1>
+			>     <Field2>Value Row 2 Col 2</Field1>
+			>   </Record>
+			> </XMLExport>
 
-RETURNED VALUE:
-None.
+	Parameters:
+		objCollection - Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
+		strFilePath - The name of the XML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
+		blnProgress - (Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
+		strEndOfLine - (Optional) Character(s) inserted at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
 
-PARAMETERS:
-
-objCollection
-Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
-
-strFilePath
-The name of the XML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
-
-blnProgress := 0
-Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
-
-blnOverwrite := 0
-Optional. If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
-
-strEndOfLine := "`r`n"
-Optional. Character(s) inserted at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
+	Returns:
+		None.
 */
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
@@ -603,40 +490,23 @@ Optional. Character(s) inserted at end-of-lines. Can be `r`n (carriage return+li
 ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", strFieldOrder := ""
 	, strFieldDelimiter := ",", strEncapsulator := """", strSortFields := "", strSortOptions := ""
 	, blnProgress := 0)
-/*
-Summary: Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView. NOTE-1: Due to an AHK limitation, files with more that 200 fields will not be transfered to a ListView. NOTE-2: Although any length of text can be stored in each cell of a ListView, only the first 260 characters are displayed (no lost data).
+/*!
+	Function: ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", blnProgress = 0])
+		Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView. NOTE-1: Due to an AHK limitation, files with more that 200 fields will not be transfered to a ListView. NOTE-2: Although any length of text can be stored in each cell of a ListView, only the first 260 characters are displayed (no lost data).
 
-RETURNED VALUE:
-None.
+	Parameters:
+		objCollection - Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details. NOTE: Multi-line fields can be inserted in a ListView and retreived from a ListView. However, take note that end-of-lines will not be visible in cells with current version of AHK_L (v1.1.09.03).
+		strGuiID - (Optional) Name of the Gui that contains the ListView where the collection will be displayed. If empty, the last default Gui is used. Empty by default. NOTE: If a Gui name is provided, this Gui will remain the default Gui at the termination of the function.
+		strListViewID - (Optional) Name of the target ListView where the collection will be displayed. If empty, the last default ListView is used. The target ListView should be empty or should contain data in the same columns number and order than the data to display. If this is not respected, new columns will be added to the right of existing columns and new rows will be added at the bottom of existing data. Empty by default. NOTE-1: Performance is greatly improved if we provide the ListView ID because we avoid redraw during import. NOTE-2: If a ListView name is provided, this ListView will remain the default at the termination of the function.
+		strFieldOrder - (Optional) List of field to include in the ListView and the order of these columns. Fields names must be separated by the strFieldDelimiter character. If empty, all fields are included. Empty by default.
+		strFieldDelimiter - (Optional) Delimiter of the fields in the strFieldOrder parameter. One character, usually comma, but can also be tab, semi-colon, pipe (|), space, etc. Comma by default.
+		strEncapsulator - (Optional) One character (usualy double-quote) possibly used in the in the strFieldOrder string to embed fields that would include special characters (as described above).
+		strSortFields - (Optional) Field(s) value(s) used to sort the collection before its insertion in the ListView. To sort on more than one field, concatenate field names with the + character (e.g. "LastName+FirstName"). Faster sort can be obtained by manualy clicking on columns headers in the ListView after the collection has been inserted. Empty by default.
+		strSortOptions - (Optional) Sorting options to apply to the sort command above. A string of zero or more of the option letters (in any order, with optional spaces in between). Most frequently used are R (reverse order) and N (numeric sort). All AHK_L sort options are supported. See [http://l.autohotkey.net/docs/commands/Sort.htm](http://l.autohotkey.net/docs/commands/Sort.htm) for more options. Empty by default.
+		blnProgress - (Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
 
-PARAMETERS:
-
-objCollection
-Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details. NOTE: Multi-line fields can be inserted in a ListView and retreived from a ListView. However, take note that end-of-lines will not be visible in cells with current version of AHK_L (v1.1.09.03).
-
-strGuiID := ""
-Optional. Name of the Gui that contains the ListView where the collection will be displayed. If empty, the last default Gui is used. Empty by default. NOTE: If a Gui name is provided, this Gui will remain the default Gui at the termination of the function.
-
-strListViewID := ""
-Optional. Name of the target ListView where the collection will be displayed. If empty, the last default ListView is used. The target ListView should be empty or should contain data in the same columns number and order than the data to display. If this is not respected, new columns will be added to the right of existing columns and new rows will be added at the bottom of existing data. Empty by default. NOTE-1: Performance is greatly improved if we provide the ListView ID because we avoid redraw during import. NOTE-2: If a ListView name is provided, this ListView will remain the default at the termination of the function.
-
-strFieldOrder := ""
-Optional. List of field to include in the ListView and the order of these columns. Fields names must be separated by the strFieldDelimiter character. If empty, all fields are included. Empty by default.
-
-strFieldDelimiter := ","
-Optional. Delimiter of the fields in the strFieldOrder parameter. One character, usually comma, but can also be tab, semi-colon, pipe (|), space, etc. Comma by default.
-
-strEncapsulator := """"
-Optional. One character (usualy double-quote) possibly used in the in the strFieldOrder string to embed fields that would include special characters (as described above).
-
-strSortFields := ""
-Optional. Field(s) value(s) used to sort the collection before its insertion in the ListView. To sort on more than one field, concatenate field names with the + character (e.g. "LastName+FirstName"). Faster sort can be obtained by manualy clicking on columns headers in the ListView after the collection has been inserted. Empty by default.
-
-strSortOptions := ""
-Optional. Sorting options to apply to the sort command above. A string of zero or more of the option letters (in any order, with optional spaces in between). Most frequently used are R (reverse order) and N (numeric sort). All AHK_L sort options are supported. See http://l.autohotkey.net/docs/commands/Sort.htm for more options. Empty by default.
-
-blnProgress := 0
-Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+	Returns:
+		None.
 */
 {
 	objHeader := Object() ; holds the keys (fields name) of the objects in the collection
@@ -684,7 +554,7 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 				; for each field, in the specified order, add the data to the array
 		LV_Add("", arrFields*) ; put each item of the array in cells of a new ListView row
 		; "arrFields*" is allowed because LV_Add is a variadic function
-		; (see http://www.autohotkey.com/board/topic/92531-lv-add-to-add-an-array/)
+		; (see [http://www.autohotkey.com/board/topic/92531-lv-add-to-add-an-array/](http://www.autohotkey.com/board/topic/92531-lv-add-to-add-an-array/))
 	}
 	Loop, % arrFields.MaxIndex()
 		LV_ModifyCol(A_Index, "AutoHdr") ;  adjust width of each column according to their content
@@ -698,33 +568,24 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 ;================================================
 
 
+
 ;================================================
 ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder := "", strFieldDelimiter := ","
 	, strEncapsulator := """", blnProgress := 0)
-/*
-Summary: Transfer the selected lines of the selected columns of a ListView to a collection of objects. Lines are transfered in the order they appear in the ListView. Column headers are used as objects keys.
+/*!
+	Function: ObjCSV_ListView2Collection([strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", blnProgress = 0])
+		Transfer the selected lines of the selected columns of a ListView to a collection of objects. Lines are transfered in the order they appear in the ListView. Column headers are used as objects keys.
 
-RETURNED VALUE:
-This functions returns an object that contains a collection (or array of objects). See ObjCSV_CSV2Collection returned value for details.
+	Parameters:
+		strGuiID - (Optional) Name of the Gui that contains the ListView where is the data to transfer. If empty, the last default Gui is used. Empty by default. NOTE: If a Gui name is provided, this Gui will remain the default Gui at the termination of the function.
+		strListViewID - (Optional) Name of the target ListView where is the data to transfer. If empty, the last default ListView is used. If one or more rows in the ListView are selected, only these rows will be inserted in the collection. Empty by default. NOTE: If a ListView name is provided, this ListView will remain the default at the termination of the function.
+		strFieldOrder - (Optional) Name of the fields (or ListView columns) to insert in the collection records. Names are separated by the strFieldDelimiter character (see below). If empty, all fields are transfered. Empty by default.
+		strFieldDelimiter - (Optional) Delimiter of the fields in the strFieldOrder parameter. One character, usually comma, but can also be tab, semi-colon, pipe (|), space, etc. Comma by default.
+		strEncapsulator - (Optional) One character (usualy double-quote) possibly used in the in the strFieldOrder string to embed fields data or field names that would include special characters (as described above).
+		blnProgress - (Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
 
-PARAMETERS:
-strGuiID := ""
-Optional. Name of the Gui that contains the ListView where is the data to transfer. If empty, the last default Gui is used. Empty by default. NOTE: If a Gui name is provided, this Gui will remain the default Gui at the termination of the function.
-
-strListViewID := ""
-Optional. Name of the target ListView where is the data to transfer. If empty, the last default ListView is used. If one or more rows in the ListView are selected, only these rows will be inserted in the collection. Empty by default. NOTE: If a ListView name is provided, this ListView will remain the default at the termination of the function.
-
-strFieldOrder := ""
-Optional. Name of the fields (or ListView columns) to insert in the collection records. Names are separated by the strFieldDelimiter character (see below). If empty, all fields are transfered. Empty by default.
-
-strFieldDelimiter := ","
-Optional. Delimiter of the fields in the strFieldOrder parameter. One character, usually comma, but can also be tab, semi-colon, pipe (|), space, etc. Comma by default.
-
-strEncapsulator := """"
-Optional. One character (usualy double-quote) possibly used in the in the strFieldOrder string to embed fields data or field names that would include special characters (as described above).
-
-blnProgress := 0
-Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+	Returns:
+		This functions returns an object that contains a collection (or array of objects). See ObjCSV_CSV2Collection returned value for details.
 */
 {
 	objCollection := Object() ; object that will be returned by the function (a collection or array of objects)
@@ -798,26 +659,21 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 ;================================================
 
 
+
 ;================================================
 ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", blnProgress := 0)
-/*
-Summary: Scan a collection of objects, sort the collection on one or more field and return sorted collection. Standard AHK_L sort options are supported.
+/*!
+	Function: ObjCSV_SortCollection(objCollection, strSortFields [, strSortOptions = "", blnProgress = 0])
+		Scan a collection of objects, sort the collection on one or more field and return sorted collection. Standard AHK_L sort options are supported.
 
-RETURNED VALUE:
-This functions returns an object that contains the array (or collection) of objects of objCollection sorted on strSortFields. See ObjCSV_CSV2Collection returned value for details.
+	Parameters:
+		objCollection - Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
+		strSortFields - Name(s) of the field(s) to use as sort criteria. To sort on more than one field, concatenate field names with the + character (e.g. "LastName+FirstName").
+		strSortOptions - (Optional) Sorting options to apply to the sort command. A string of zero or more of the option letters (in any order, with optional spaces in between). Most frequently used are R (reverse order) and N (numeric sort). All AHK_L sort options are supported. See [http://l.autohotkey.net/docs/commands/Sort.htm](http://l.autohotkey.net/docs/commands/Sort.htm) for more options. Empty by default.
+		blnProgress - (Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
 
-PARAMETERS:
-objCollection
-Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details.
-
-strSortFields
-Name(s) of the field(s) to use as sort criteria. To sort on more than one field, concatenate field names with the + character (e.g. "LastName+FirstName").
-
-strSortOptions := ""
-Optional. Sorting options to apply to the sort command. A string of zero or more of the option letters (in any order, with optional spaces in between). Most frequently used are R (reverse order) and N (numeric sort). All AHK_L sort options are supported. See http://l.autohotkey.net/docs/commands/Sort.htm for more options. Empty by default.
-
-blnProgress := 0
-Optional. If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.
+	Returns:
+		This functions returns an object that contains the array (or collection) of objects of objCollection sorted on strSortFields. See ObjCSV_CSV2Collection returned value for details.
 */
 {
 	objCollectionSorted := Object()
@@ -845,7 +701,7 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 	;
 	; Because strIndex can be quite large, we gain performance by splitting the string in substrings of around 300 kb.
 	; See discussion on AHK forum
-	; http://www.autohotkey.com/board/topic/92832-tip-large-strings-performance-or-divide-to-conquer/
+	; [http://www.autohotkey.com/board/topic/92832-tip-large-strings-performance-or-divide-to-conquer/](http://www.autohotkey.com/board/topic/92832-tip-large-strings-performance-or-divide-to-conquer/)
 	intOptimalSizeOfSubstrings := 300000 ; found by trial and error - no impact on results if not the optimal size
 	strSubstring := ""
 	Loop, %intTotalRecords% ; populate index substrings
@@ -896,26 +752,22 @@ Optional. If true (or 1), a progress bar is displayed. Should be use only for ve
 ;******************************************************************************************************************** 
 
 Prepare4Multilines(ByRef strCsvData, strFieldEncapsulator := """", blnProgress := 0)
+/*!
+	Function: Prepare4Multilines(ByRef strCsvData [, strFieldEncapsulator = """", blnProgress = 0])
+		Replace end-of-line characters (`n) in field data in strCsvData with a replacement character in order to make data rows stand on a single-line before they are processed by the "Loop, Parse" command. A safe replacement character (absent from the strCsvData string) is automatically determined by the function.
+
+	Parameters:
+		ByRef strCsvData - Input/Output data string processed by the function and returned to the caller after all end-of-line characters (`n) have been replaced with the safe replacement character.
+		strFieldEncapsulator - (Optional) Character used in the strCsvData data to embed fields that include line-breaks. Double-quote by default.
+		blnProgress - (Optional) If true (or 1), a progress bar is displayed. Default false (or 0).
+
+	Returns:
+		The replacement character for end-of-lines. Usualy ¡ (inverted exclamation mark, ASCII 161) or the next available safe character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.  The caller of this function *must* put this value in a variable and *must* do the reverse replacement with `n at the appropriate step inside the "Loop, Parse" command.
+*/
 /*
-Summary: Replace end-of-line characters (`n) in field data in strCsvData with a replacement character in order to make data rows stand on a single-line before they are processed by the "Loop, Parse" command. A safe replacement character (absent from the strCsvData string) is automatically determined by the function.
-
-RETURNED VALUE:
-The replacement character for end-of-lines. Usualy ¡ (inverted exclamation mark, ASCII 161) or the next available safe character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.  The caller of this function *must* put this value in a variable and *must* do the reverse replacement with `n at the appropriate step inside the "Loop, Parse" command.
-
-PARAMETERS:
-ByRef strCsvData
-Input/Output data string processed by the function and returned to the caller after all end-of-line characters (`n) have been replaced with the safe replacement character.
-
-strFieldEncapsulator
-Character used in the strCsvData data to embed fields that include line-breaks. Double-quote by default.
-
-blnProgress
-If true (or 1), a progress bar is displayed. Default false (or 0).
-
 CALL-FOR-HELP!
-#1 This function uses a very rudimentary algorithm to do the replacements only when the end-of-line charaters are enclosed between double-quotes. I'm confident my code is safe. But there is certainly a more efficient way to accomplish this: RegEx command or another approach? Any help appreciated here :-)
-#2 Need help to test it / make sure this work with ASCII files with end-of-line character other than `n (works well on DOS files, need to be tested on Unix or Mac text files -  see http://peterbenjamin.com/seminars/crossplatform/texteol.html)
-
+	#1 This function uses a very rudimentary algorithm to do the replacements only when the end-of-line charaters are enclosed between double-quotes. I'm confident my code is safe. But there is certainly a more efficient way to accomplish this: RegEx command or another approach? Any help appreciated here :-)
+	#2 Need help to test it / make sure this work with ASCII files with end-of-line character other than `n (works well on DOS files, need to be tested on Unix or Mac text files -  see [http://peterbenjamin.com/seminars/crossplatform/texteol.html](http://peterbenjamin.com/seminars/crossplatform/texteol.html))
 */
 {
 	if (blnProgress)
@@ -948,10 +800,23 @@ CALL-FOR-HELP!
 
 
 Format4CSV(F4C_String, strFieldDelimiter := ",", strEncapsulator := """")
-/*
-Format4CSV by Rhys (http://www.autohotkey.com/forum/topic27233.html)
-Added the strFieldDelimiter parameter to make it work with locales with semi-colon separator
-Added the strEncapsulator parameter to make it work with other encapsultors than double-quotes
+/*!
+	Function: Format4CSV(F4C_String [, strFieldDelimiter = ",", strEncapsulator = """"])
+		Add encapsulator before and after F4C_String if the string includes line breaks, field delimiter or field encapsulator. Encapsulated field encapsulators are doubled.
+		  
+	Parameters:
+		F4C_String - String to convert to CSV format
+		strFieldDelimiter - (Optional) Field delimiter. One character, usually comma (default value) or tab.
+		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
+
+	Returns:
+		String with required encapsulator.
+		
+	Remarks:
+		Based on Format4CSV by Rhys ([http://www.autohotkey.com/forum/topic27233.html](http://www.autohotkey.com/forum/topic27233.html))  
+		  
+		Added the strFieldDelimiter parameter to make it work with separators other than comma  
+		Added the strEncapsulator parameter to make it work with other encapsultors than double-quotes
 */
 {
    Reformat:=False ; Assume String is OK
@@ -975,17 +840,26 @@ Added the strEncapsulator parameter to make it work with other encapsultors than
 
 
 ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
-/*
-Summary: Returns an object array from a delimiter-separated string.
-Based on ReturnDSVArray by DerRaphael (thanks for regex hard work).
-See Delimiter Seperated Values by DerRaphael (http://www.autohotkey.com/forum/post-203280.html#203280)
+/*!
+	Function: ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
+		Returns an object array from a delimiter-separated string.
+		  
+	Parameters:
+		CurrentDSVLine - String to convert to an object array
+		Delimiter - (Optional) Field delimiter. One character, usually comma (default value) or tab.
+		Encapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
+
+	Returns:
+		Returns an object array from a delimiter-separated string.
+		
+	Remarks:
+		Based on ReturnDSVArray by DerRaphael (thanks for regex hard work).  
+		See Delimiter Seperated Values by DerRaphael ([http://www.autohotkey.com/forum/post-203280.html#203280](http://www.autohotkey.com/forum/post-203280.html#203280))
 */
 {
 	objReturnObject := Object()             ; create a local object array that will be returned by the function
 	if ((StrLen(Delimiter)!=1)||(StrLen(Encapsulator)!=1))
-	{
 		return                              ; return empty object indicating an error
-	}
 	strPreviousFormat := A_FormatInteger    ; save current interger format
 	SetFormat,integer,H                     ; needed for escaping the RegExNeedle properly
 	d := SubStr(ASC(delimiter)+0,2)         ; used as hex notation in the RegExNeedle
