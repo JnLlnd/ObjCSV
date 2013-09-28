@@ -1,6 +1,9 @@
-# ObjCSV Library - Library to load and save CSV files to/from objects and ListView
+# ObjCSV Library
+##Library to load and save CSV files to/from objects and ListView
+
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
+Library home on GitHum [https://github.com/JnLlnd/ObjCSV](https://github.com/JnLlnd/ObjCSV)
 2013-08-22+
 
 AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type
@@ -35,23 +38,6 @@ Copy this script in a file named ObjCSV.ahk and save this file in one of these \
 
 You can use the functions in this library by calling ObjCSV_FunctionName. No #Include required!
 
-
-FUNCTIONS QUICK REFERENCE
-
-ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = true, blnMultiline = 1, intProgress = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r"])
-Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNames parameter. Delimiters are configurable.
-
-ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", blnProgress = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`n", strEolReplacement = ""])
-Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are included or not in the CSV file. Delimiters are configurable.
-
-ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", blnProgress = "0"])
-Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView.
-
-ObjCSV_ListView2Collection([strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", blnProgress = "0"])
-Transfer the selected lines of the selected columns of a ListView to a collection of objects. Lines are transfered in the order they appear in the ListView. Column headers are used as objects keys.
-
-ObjCSV_SortCollection(objCollection, strSortFields [, strSortOptions = "", blnProgress = 0])
-Sort the objectfs of a collection using one or multiple fields as sorting key.  Internal AHK Sort options are supported.
 
 DISCUSSION AND TUTORIAL
 
