@@ -8,28 +8,42 @@
 </head>
 <body>
 
-<h1>ObjCSV Library - Version v0.2.5a - by By Jean Lalonde</h1>
-<p>AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type.<br/></p>
+<h1>ObjCSV Library - Version v0.2.6 - by By Jean Lalonde</h1>
+<p>AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
+Object data type.<br/></p>
 <ul>
 <li>Read and save files in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.).</li>
 <li>Display, edit and read Collections in GUI ListView objects.</li>
 <li>Export Collection to fixed-width, HTML or XML files.</li>
 </ul>
-<p>For more info on CSV files, see <a href="http://en.wikipedia.org/wiki/Comma-separated_values">http://en.wikipedia.org/wiki/Comma-separated_values</a>.<br/></p>
-<p>Written by Jean Lalonde (<a href="http://www.autohotkey.com/board/user/4880-jnllnd/">JnLlnd</a> on AHK forum) using AutoHotkey_L v1.1.09.03+ (<a href="http://l.autohotkey.net/">http://l.autohotkey.net/</a>)<br/></p>
+<p>For more info on CSV files, see
+<a href="http://en.wikipedia.org/wiki/Comma-separated_values">http://en.wikipedia.org/wiki/Comma-separated_values</a>.<br/></p>
+<p>Written by Jean Lalonde (<a href="http://www.autohotkey.com/board/user/4880-jnllnd/">JnLlnd</a> on AHK forum) using
+AutoHotkey_L v1.1.09.03+ (<a href="http://l.autohotkey.net/">http://l.autohotkey.net/</a>)<br/></p>
+<h3 id="online-material">ONLINE MATERIAL</h3>
+<ul>
+<li><a href="https://github.com/JnLlnd/ObjCSV">Home of this library is on GitHub</a></li>
+<li><a href="https://raw.github.com/JnLlnd/ObjCSV/master/Lib/ObjCSV.ahk">The most up-to-date version of this AHK file on GitHub</a></li>
+<li><a href="http://jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/">Online ObjCSV Library Help</a></li>
+<li><a href="http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/">Topic about this library on AutoHotkey forum</a></li>
+</ul>
 <h3 id="instructions">INSTRUCTIONS</h3>
 <p>Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:</p>
 <ul>
 <li>%A_ScriptDir%\Lib\</li>
 <li>%A_MyDocuments%\AutoHotkey\Lib\</li>
-<li>[path to the currently running AutoHotkey_L.exe]\Lib\ (AutoHotKey_L can be downloaded here: <a href="http://l.autohotkey.net/">http://l.autohotkey.net/</a>)</li>
+<li>[path to the currently running AutoHotkey_L.exe]\Lib\</li>
 </ul>
 <p>You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)</p>
 <h3 id="versions-history">VERSIONS HISTORY</h3>
-<p>0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML), optimize progress bars refresh rates<br/>
+<p>0.2.6  2013-09-29  Display progress using Progress bar or Status bar, customize progress messages, doc converted to GenDocs 3.0<br/>
+0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML),
+optimize progress bars refresh rates<br/>
 0.2.4  2013-09-25  Fix a bug adding progress bar in ObjCSV_ListView2Collection<br/>
-0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of code<br/>
-0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML (ObjCSV_Collection2XML)<br/>
+0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of
+code<br/>
+0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML
+(ObjCSV_Collection2XML)<br/>
 0.1.3  2013-09-08  Multi-line replacement character at load time in ObjCSV_CSV2Collection<br/>
 0.1.2  2013-09-05  Standardize boolean parameters to 0/1 (not True/False) and without double-quotes<br/>
 0.1.1  2013-08-26  First release</p>
@@ -43,9 +57,8 @@
   <li><a href="ObjCSV_Collection2ListView.html">ObjCSV_Collection2ListView() Function</a></li>
   <li><a href="ObjCSV_ListView2Collection.html">ObjCSV_ListView2Collection() Function</a></li>
   <li><a href="ObjCSV_SortCollection.html">ObjCSV_SortCollection() Function</a></li>
-  <li><a href="Prepare4Multilines.html">Prepare4Multilines() Function</a></li>
-  <li><a href="Format4CSV.html">Format4CSV() Function</a></li>
-  <li><a href="ReturnDSVObjectArray.html">ReturnDSVObjectArray() Function</a></li>
+  <li><a href="ObjCSV_Format4CSV.html">ObjCSV_Format4CSV() Function</a></li>
+  <li><a href="ObjCSV_ReturnDSVObjectArray.html">ObjCSV_ReturnDSVObjectArray() Function</a></li>
 </ul>
 
 </body>

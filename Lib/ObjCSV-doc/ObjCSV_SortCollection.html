@@ -11,7 +11,7 @@
 <h1>ObjCSV_SortCollection()</h1>
 <p>Scan a collection of objects, sort the collection on one or more field and return sorted collection. Standard AHK_L sort options are supported.</p>
 
-<pre class="Syntax">ObjCSV_SortCollection(objCollection, strSortFields [, strSortOptions = &quot;&quot;, blnProgress = 0])</pre>
+<pre class="Syntax">ObjCSV_SortCollection(objCollection, strSortFields [, strSortOptions = &quot;&quot;, intProgressType = 0, strProgressText = &quot;&quot;])</pre>
 <h3>Parameters</h4>
 <table class="info">
 <tr>
@@ -27,8 +27,12 @@
   <td width="85%">(Optional) Sorting options to apply to the sort command. A string of zero or more of the option letters (in any order, with optional spaces in between). Most frequently used are R (reverse order) and N (numeric sort). All AHK_L sort options are supported. See <a href="http://l.autohotkey.net/docs/commands/Sort.htm">http://l.autohotkey.net/docs/commands/Sort.htm</a> for more options. Empty by default.</td>
 </tr>
 <tr>
-  <td width="15%">blnProgress</td>
-  <td width="85%">(Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.</td>
+  <td width="15%">intProgressType</td>
+  <td width="85%">(Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part &quot;n&quot; of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).</td>
+</tr>
+<tr>
+  <td width="15%">strProgressText</td>
+  <td width="85%">(Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string &quot;##&quot; is replaced with the percentage of progress. See also intProgressType above. Empty by default.</td>
 </tr>
 </table>
 <h3>Returns</h3>

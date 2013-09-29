@@ -1,35 +1,47 @@
 /*!
 	Library: ObjCSV Library
-		AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type.  
+		AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
+		Object data type.  
 		  
 		* Read and save files in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.).
 		* Display, edit and read Collections in GUI ListView objects.
 		* Export Collection to fixed-width, HTML or XML files.
 		  
-		For more info on CSV files, see [http://en.wikipedia.org/wiki/Comma-separated_values](http://en.wikipedia.org/wiki/Comma-separated_values).  
+		For more info on CSV files, see
+		[http://en.wikipedia.org/wiki/Comma-separated_values](http://en.wikipedia.org/wiki/Comma-separated_values).  
 		  
-		Written by Jean Lalonde ([JnLlnd](http://www.autohotkey.com/board/user/4880-jnllnd/) on AHK forum) using AutoHotkey_L v1.1.09.03+ ([http://l.autohotkey.net/](http://l.autohotkey.net/))  
-		
+		Written by Jean Lalonde ([JnLlnd](http://www.autohotkey.com/board/user/4880-jnllnd/) on AHK forum) using
+		AutoHotkey_L v1.1.09.03+ ([http://l.autohotkey.net/](http://l.autohotkey.net/))  
+		  
+		### ONLINE MATERIAL
+		* [Home of this library is on GitHub](https://github.com/JnLlnd/ObjCSV)
+		* [The most up-to-date version of this AHK file on GitHub](https://raw.github.com/JnLlnd/ObjCSV/master/Lib/ObjCSV.ahk)
+		* [Online ObjCSV Library Help](http://jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/)
+		* [Topic about this library on AutoHotkey forum](http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/)
+		  
 		### INSTRUCTIONS
 			Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:
 				* %A_ScriptDir%\Lib\
 				* %A_MyDocuments%\AutoHotkey\Lib\
-				* \[path to the currently running AutoHotkey_L.exe]\Lib\ (AutoHotKey_L can be downloaded here: [http://l.autohotkey.net/](http://l.autohotkey.net/))
+				* \[path to the currently running AutoHotkey_L.exe]\Lib\
 			  
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
-			0.2.6  2013-09-??  Display progress using Progress bar or Status bar, customize progress messages  
-			0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML), optimize progress bars refresh rates  
+			0.2.6  2013-09-29  Display progress using Progress bar or Status bar, customize progress messages, doc converted to GenDocs 3.0  
+			0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML),
+			optimize progress bars refresh rates  
 			0.2.4  2013-09-25  Fix a bug adding progress bar in ObjCSV_ListView2Collection  
-			0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of code  
-			0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML (ObjCSV_Collection2XML)  
+			0.2.3  2013-09-20  Fix a bug when importing files with duplicate field names, reformating long lines of
+			code  
+			0.2.2  2013-09-15  Export to fixed-width (ObjCSV_Collection2Fixed), HTML (ObjCSV_Collection2HTML) and XML
+			(ObjCSV_Collection2XML)  
 			0.1.3  2013-09-08  Multi-line replacement character at load time in ObjCSV_CSV2Collection  
 			0.1.2  2013-09-05  Standardize boolean parameters to 0/1 (not True/False) and without double-quotes  
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.2.5a
+	Version: v0.2.6
 */
 
 
@@ -39,11 +51,13 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 	, strEolReplacement := "", strProgressText := "")
 /*!
 	Function: ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r", strEolReplacement = "", strProgressText := ""])
-		Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by the ByRef variable strFieldNames. Delimiters are configurable.
+		Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of
+		the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by
+		the ByRef variable strFieldNames. Delimiters are configurable.
 
 	Parameters:
 		strFilePath - Path of the file to load, which is assumed to be in A_WorkingDir if an absolute path isn't specified.
-		strFieldNames - (ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, column numbers are used as object keys, starting at 1. Empty by default. Output: See RETURNED VALUES above.
+		strFieldNames - (ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, column numbers are used as object keys, starting at 1. Empty by default. Output: See "Returns:" above.
 		blnHeader - (Optional) If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True (or 1) by default.
 		blnMultiline - (Optional) If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE-1: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details). NOTE-2: If blnMultiline is True, you can use the strEolReplacement parameter to specify a character (or string) that will be converted to line-breaks if found in the CSV file.
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
@@ -57,7 +71,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 	Returns:
 		This functions returns an object that contains an array of objects. This collection of objects can be viewed as a table in a database. Each object in the collection is like a record (or a line) in a table. These records are, in fact, associative arrays which contain a list key-value pairs. Key names are like field names (or column names) in the table. Key names are taken in the header of the CSV file, if it exists. Keys can be strings or integers, while values can be of any type that can be expressed as text. The records can be read using the syntax obj[1], obj[2] (...). Field values can be read using the syntax obj[1].keyname or, when field names contain spaces, obj[1]["key name"]. The "Loop, Parse" and "For key, value in array" commands allow to easily browse the content of these objects.
 		
-		If blnHeader is true (or 1), the ByRef variable strFieldNames returns a string containing the field names (object keys) read from the first line of the CSV file, in the format and in the order they appear in the file. If a field name is empty, it is replaced with "Empty_" and its field number.  If a field name is duplicated, the field number is added to the duplicate name.  If blnHeader is false (or 0), the value of strFieldNames is unchanged by the function.
+		If blnHeader is true (or 1), the ByRef parameter strFieldNames returns a string containing the field names (object keys) read from the first line of the CSV file, in the format and in the order they appear in the file. If a field name is empty, it is replaced with "Empty_" and its field number.  If a field name is duplicated, the field number is added to the duplicate name.  If blnHeader is false (or 0), the value of strFieldNames is unchanged by the function.
 
 */
 {
@@ -86,12 +100,13 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			; augment intProgressIndex of len of line + 2 for cr-lf 
 		if (intProgressType AND (intProgressThisBatch > intProgressBatchSize))
 		{
-			ProgressUpdate(intProgressType, intProgressIndex, intMaxProgress, strProgressText) ; update progress bar only every %intProgressBatchSize% chars
+			ProgressUpdate(intProgressType, intProgressIndex, intMaxProgress, strProgressText)
+				; update progress bar only every %intProgressBatchSize% chars
 			intProgressThisBatch := 0
 		}
 		if (A_Index = 1) and (blnHeader) ; we have an header to read
 		{
-			objHeader := ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
+			objHeader := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
 				; returns an object array from the first line of the delimited-separated-value file
 			strFieldNamesMatchList := strFieldDelimiter
 			Loop, % objHeader.MaxIndex() ; check if fields names are empty or duplicated
@@ -105,8 +120,8 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 				strFieldNamesMatchList := strFieldNamesMatchList . objHeader[A_Index] . strFieldDelimiter
 			}
 			strFieldNames := ""
-			for intIndex, strFieldName in objHeader ; returns the updated field names to the ByRef variable
-				strFieldNames := strFieldNames . Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator)
+			for intIndex, strFieldName in objHeader ; returns the updated field names to the ByRef parameter
+				strFieldNames := strFieldNames . ObjCSV_Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator)
 					. strFieldDelimiter
 			StringTrimRight, strFieldNames, strFieldNames, 1 ; remove extra field delimiter
 			if !(objHeader.MaxIndex()) ; we don't have an object, something went wrong
@@ -121,10 +136,10 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			if (A_Index = 1) and StrLen(strFieldNames)
 				; If we get here, bnHeader is false so there is no header in the CSV file but we have values
 				; in strFieldNames. In this case, we get field names from strFieldNames.
-				objHeader := ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
+				objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
 					; returns an object array from the delimited-separated-value strFieldNames string
 			objData := Object() ; object of one record in the collection
-			for intIndex, strFieldData in ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
+			for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
 				; returns an object array from each line of the delimited-separated-value file
 			{
 				if blnMultiline
@@ -136,8 +151,10 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 						using ObjCSV_Collection2CSV and opened in Notepad. However, %strRecordDelimiter% seems
 						to work well in the previous command... Anyway, for safety (at least in the Windows
 						environment), I replaced it with `r`n in the next command.
-						For reference, see [http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/](http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/)
-						and [http://peterbenjamin.com/seminars/crossplatform/texteol.html](http://peterbenjamin.com/seminars/crossplatform/texteol.html)
+						For reference, see
+						http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/
+						and
+						http://peterbenjamin.com/seminars/crossplatform/texteol.html
 						*/
 					StringReplace, strFieldData, strFieldData, %strEolReplacement%, `r`n, 1
 						; replace all user-supplied replacement character with end-of-line, if present
@@ -200,7 +217,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 			; in their natural order 
 		{
 			for strFieldName, strValue in objCollection[1]
-				strFieldOrder := strFieldOrder . Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator) 
+				strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator) 
 					. strFieldDelimiter
 			StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
 		}
@@ -213,29 +230,30 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		strRecord := "" ; line to add to the CSV file
 		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
 		{
-			ProgressUpdate(intProgressType, A_index, intMax, strProgressText) ; update progress bar only every %intProgressBatchSize% chars
+			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+				; update progress bar only every %intProgressBatchSize% chars
 			FileAppend, %strData%, %strFilePath%
 			strData := ""
 		}
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
 			intLineNumber := A_Index
-			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+			for intColIndex, strFieldName in ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
 				; parse strFieldOrder handling encapsulated field names
 			{
 				strValue := objCollection[intLineNumber][Trim(strFieldName)]
 				if (StrLen(strEolReplacement)) ; multiline field eol replacement
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
-				strRecord := strRecord . Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
+				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
 			}
 		}
 		else ; we put all fields in the record (I assume the order of fields is the same for each object)
 			for strFieldName, strValue in objCollection[A_Index]
 			{
-				strValue := Format4CSV(strValue, strFieldDelimiter, strEncapsulator)
+				strValue := ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator)
 				if (StrLen(strEolReplacement))
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
-				strRecord := strRecord . Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
+				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
 			}
 		StringTrimRight, strRecord, strRecord, 1 ; remove extra field delimiter
 		strData := strData . strRecord . strEndOfLine
@@ -289,7 +307,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		strHeaderFixed := ""
 		if StrLen(strFieldOrder) ; convert DSV string to fixed-width
 		{
-			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+			for intColIndex, strFieldName in ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
 				; parse strFieldOrder handling encapsulated field names
 				strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldName, arrIntWidth%intColIndex%)
 					; add fixed-width field name for each column
@@ -315,14 +333,15 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		strRecord := "" ; line to add to the file
 		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
 		{
-			ProgressUpdate(intProgressType, A_index, intMax, strProgressText) ; update progress bar only every %intProgressBatchSize% chars
+			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+				; update progress bar only every %intProgressBatchSize% chars
 			FileAppend, %strData%, %strFilePath%
 			strData := ""
 		}
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
 			intLineNumber := A_Index
-			for intColIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+			for intColIndex, strFieldName in ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
 				; parse strFieldOrder handling encapsulated field names
 			{
 				strValue := objCollection[intLineNumber][Trim(strFieldName)]
@@ -422,7 +441,8 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 	{
 		if (intProgressType) and !Mod(A_Index, intProgressBatchSize)
 		{
-			ProgressUpdate(intProgressType, A_index, intMax, strProgressText) ; update progress bar only every %intProgressBatchSize% chars
+			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+				; update progress bar only every %intProgressBatchSize% chars
 			FileAppend, %strData%, %strFilePath%
 			strData := ""
 		}
@@ -487,7 +507,8 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 	{
 		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
 		{
-			ProgressUpdate(intProgressType, A_index, intMax, strProgressText) ; update progress bar only every %intProgressBatchSize% chars
+			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+				; update progress bar only every %intProgressBatchSize% chars
 			FileAppend, %strData%, %strFilePath%
 			strData := ""
 		}
@@ -531,7 +552,8 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 	objHeader := Object() ; holds the keys (fields name) of the objects in the collection
 	if StrLen(strSortFields)
 	{
-		objCollection := ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions, intProgressType, strProgressText . " (1/2)")
+		objCollection := ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions, intProgressType
+			, strProgressText . " (1/2)")
 		strProgressText := strProgressText . " (2/2)"
 	}
 	intMax := objCollection.MaxIndex()
@@ -553,7 +575,7 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 			strFieldOrder := strFieldOrder . strFieldName . strFieldDelimiter
 		StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
 	}
-	objHeader := ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+	objHeader := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
 		; returns an object array from a delimited-separated-value string
 	if objHeader.MaxIndex() > 200 ; ListView cannot display more that 200 columns
 	{
@@ -570,7 +592,8 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 	loop, %intMax%
 	{
 		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
-			ProgressUpdate(intProgressType, A_index, intMax, strProgressText) ; update progress bar only every %intProgressBatchSize% chars
+			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+				; update progress bar only every %intProgressBatchSize% chars
 		intRowNumber := A_Index
 		arrFields := Array() ; will contain the values for each cell of a new row
 		for intIndex, strFieldName in objHeader
@@ -578,7 +601,7 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 				; for each field, in the specified order, add the data to the array
 		LV_Add("", arrFields*) ; put each item of the array in cells of a new ListView row
 		; "arrFields*" is allowed because LV_Add is a variadic function
-		; (see [http://www.autohotkey.com/board/topic/92531-lv-add-to-add-an-array/](http://www.autohotkey.com/board/topic/92531-lv-add-to-add-an-array/))
+		; (see http://www.autohotkey.com/board/topic/92531-lv-add-to-add-an-array/)
 	}
 	Loop, % arrFields.MaxIndex()
 		LV_ModifyCol(A_Index, "AutoHdr") ; adjust width of each column according to their content
@@ -649,7 +672,7 @@ ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder :=
 		loop, %intNbCols%
 		{
 			LV_GetText(strFieldHeader, 0, A_Index)
-			strFieldOrder := strFieldOrder . Format4CSV(strFieldHeader, strFieldDelimiter, strEncapsulator)
+			strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldHeader, strFieldDelimiter, strEncapsulator)
 				. strFieldDelimiter ; handle field named with special characters requiring encapsulation
 		}
 		StringTrimRight, strFieldOrder, strFieldOrder, 1
@@ -658,7 +681,8 @@ ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder :=
 	Loop
 	{
 		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
-			ProgressUpdate(intProgressType, A_index, intNbRowsProgress, strProgressText) ; update progress bar only every %intProgressBatchSize% chars
+			ProgressUpdate(intProgressType, A_index, intNbRowsProgress, strProgressText)
+				; update progress bar only every %intProgressBatchSize% chars
 		if (blnSelected)
 			intRowNumber := LV_GetNext(intRowNumber) ; get next selected row number
 		else
@@ -667,7 +691,7 @@ ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder :=
 			; we passed the last row or the last selected row of the ListView
 			break
 		objData := Object() ; add row data to a new object in the collection
-		for intIndex, strFieldName in ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+		for intIndex, strFieldName in ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
 			; parse strFieldOrder handling encapsulated fields
 		{
 			LV_GetText(strFieldData, intRowNumber, objHeaderPositions[Trim(strFieldName)])
@@ -730,14 +754,15 @@ ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", intPro
 	;
 	; Because strIndex can be quite large, we gain performance by splitting the string in substrings of around 300 kb.
 	; See discussion on AHK forum
-	; [http://www.autohotkey.com/board/topic/92832-tip-large-strings-performance-or-divide-to-conquer/](http://www.autohotkey.com/board/topic/92832-tip-large-strings-performance-or-divide-to-conquer/)
+	; http://www.autohotkey.com/board/topic/92832-tip-large-strings-performance-or-divide-to-conquer/
 	intOptimalSizeOfSubstrings := 300000 ; found by trial and error - no impact on results if not the optimal size
 	strSubstring := ""
 	Loop, %intTotalRecords% ; populate index substrings
 	{
 		intRecordNumber := A_Index
 		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
-			ProgressUpdate(intProgressType, A_index, intTotalRecords, strProgressText) ; update progress bar only every %intProgressBatchSize% chars
+			ProgressUpdate(intProgressType, A_index, intTotalRecords, strProgressText)
+				; update progress bar only every %intProgressBatchSize% chars
 		if InStr(strSortFields, "+")
 		{
 			strSortingValue := ""
@@ -776,57 +801,10 @@ ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", intPro
 
 
 
-;******************************************************************************************************************** 
-; INTERNAL FUNCTIONS
-;******************************************************************************************************************** 
-
-Prepare4Multilines(ByRef strCsvData, strFieldEncapsulator := """", intProgressType := 0, strProgressText := "")
+;================================================
+ObjCSV_Format4CSV(F4C_String, strFieldDelimiter := ",", strEncapsulator := """")
 /*!
-	Function: Prepare4Multilines(ByRef strCsvData [, strFieldEncapsulator = """", intProgressType = 0, strProgressText = ""])
-		Replace end-of-line characters (`n) in field data in strCsvData with a replacement character in order to make data rows stand on a single-line before they are processed by the "Loop, Parse" command. A safe replacement character (absent from the strCsvData string) is automatically determined by the function.
-
-	Parameters:
-		ByRef strCsvData - Input/Output data string processed by the function and returned to the caller after all end-of-line characters (`n) have been replaced with the safe replacement character.
-		strFieldEncapsulator - (Optional) Character used in the strCsvData data to embed fields that include line-breaks. Double-quote by default.
-		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
-		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
-
-	Returns:
-		The replacement character for end-of-lines. Usualy ¡ (inverted exclamation mark, ASCII 161) or the next available safe character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.  The caller of this function *must* put this value in a variable and *must* do the reverse replacement with `n at the appropriate step inside the "Loop, Parse" command.
-*/
-{
-	if (intProgressType)
-	{
-		intMaxProgress := StrLen(strCsvData)
-		intProgressBatchSize := Round(intMaxProgress / 100)
-		ProgressStart(intProgressType, intMaxProgress, strProgressText)
-	}
-	intEolReplacementAsciiCode := GetFirstUnusedAsciiCode(strCsvData) ; Usualy ¡ (inverted exclamation mark, ASCII 161)
-	blnInsideEncapsulators := false
-	Loop, Parse, strCsvData
-		; parsing on a temporary copy of strCsvData -  so we can update the original strCsvData inside the loop
-	{
-		if (intProgressType AND !Mod(A_Index, intProgressBatchSize))
-			ProgressUpdate(intProgressType, A_index, intMaxProgress, strProgressText)
-		if (A_Index = 1)
-			strCsvData := ""
-		if (blnInsideEncapsulators AND A_Loopfield = "`n")
-			strCsvData := strCsvData . Chr(intEolReplacementAsciiCode)
-		else
-			strCsvData := strCsvData . A_Loopfield
-		if (A_Loopfield = strFieldEncapsulator)
-			blnInsideEncapsulators := !blnInsideEncapsulators ; beginning or end of encapsulated text
-	}
-	if (intProgressType)
-		ProgressStop(intProgressType)
-	return Chr(intEolReplacementAsciiCode)
-}
-
-
-
-Format4CSV(F4C_String, strFieldDelimiter := ",", strEncapsulator := """")
-/*!
-	Function: Format4CSV(F4C_String [, strFieldDelimiter = ",", strEncapsulator = """"])
+	Function: ObjCSV_Format4CSV(F4C_String [, strFieldDelimiter = ",", strEncapsulator = """"])
 		Add encapsulator before and after F4C_String if the string includes line breaks, field delimiter or field encapsulator. Encapsulated field encapsulators are doubled.
 		  
 	Parameters:
@@ -861,12 +839,14 @@ Format4CSV(F4C_String, strFieldDelimiter := ",", strEncapsulator := """")
       F4C_String= %strEncapsulator%%F4C_String%%strEncapsulator% ; If needed, bracket the string in encapsulators
    Return, F4C_String
 }
+;================================================
 
 
 
-ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
+;================================================
+ObjCSV_ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
 /*!
-	Function: ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
+	Function: ObjCSV_ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
 		Returns an object array from a delimiter-separated string.
 		  
 	Parameters:
@@ -925,9 +905,70 @@ ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
 
 
 
+;******************************************************************************************************************** 
+; INTERNAL FUNCTIONS
+;******************************************************************************************************************** 
+
+Prepare4Multilines(ByRef strCsvData, strFieldEncapsulator := """", intProgressType := 0, strProgressText := "")
+/*
+	Function: Prepare4Multilines(ByRef strCsvData [, strFieldEncapsulator = """", intProgressType = 0, strProgressText = ""])
+		Replace end-of-line characters (`n) in field data in strCsvData with a replacement character in order to make data rows stand on a single-line before they are processed by the "Loop, Parse" command. A safe replacement character (absent from the strCsvData string) is automatically determined by the function.
+
+	Parameters:
+		strCsvData - (ByRef) Input: Data string to process. Output: See "Returns:" above. 
+		strFieldEncapsulator - (Optional) Character used in the strCsvData data to embed fields that include line-breaks. Double-quote by default.
+		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
+		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
+
+	Returns:
+		The function returns the replacement character for end-of-lines. Usualy ¡ (inverted exclamation mark, ASCII 161) or the next available safe character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.  The caller of this function *must* save this value in a variable and *must* do the reverse replacement with `n at the appropriate step inside a "Loop, Parse" command.  
+		  
+		The ByRef parameter returns the data string with all end-of-line characters (`n) replaced with the safe replacement character.
+*/
+/*
+CALL-FOR-HELP!
+	#1 This function uses a very rudimentary algorithm to do the replacements only when the end-of-line charaters are
+	enclosed between double-quotes. I'm confident my code is safe. But there is certainly a more efficient way to
+	accomplish this: RegEx command or another approach? Any help appreciated here :-)
+	#2 Need help to test it / make sure this work with ASCII files with end-of-line character other than `n (works well
+	on DOS files, need to be tested on Unix or Mac text files -
+	see http://peterbenjamin.com/seminars/crossplatform/texteol.html)
+*/
+{
+	if (intProgressType)
+	{
+		intMaxProgress := StrLen(strCsvData)
+		intProgressBatchSize := Round(intMaxProgress / 100)
+		ProgressStart(intProgressType, intMaxProgress, strProgressText)
+	}
+	intEolReplacementAsciiCode := GetFirstUnusedAsciiCode(strCsvData) ; Usualy ¡ (inverted exclamation mark, ASCII 161)
+	blnInsideEncapsulators := false
+	Loop, Parse, strCsvData
+		; parsing on a temporary copy of strCsvData -  so we can update the original strCsvData inside the loop
+	{
+		if (intProgressType AND !Mod(A_Index, intProgressBatchSize))
+			ProgressUpdate(intProgressType, A_index, intMaxProgress, strProgressText)
+		if (A_Index = 1)
+			strCsvData := ""
+		if (blnInsideEncapsulators AND A_Loopfield = "`n")
+			strCsvData := strCsvData . Chr(intEolReplacementAsciiCode)
+		else
+			strCsvData := strCsvData . A_Loopfield
+		if (A_Loopfield = strFieldEncapsulator)
+			blnInsideEncapsulators := !blnInsideEncapsulators ; beginning or end of encapsulated text
+	}
+	if (intProgressType)
+		ProgressStop(intProgressType)
+	return Chr(intEolReplacementAsciiCode)
+}
+
+
+
 GetFirstUnusedAsciiCode(strData, intAscii := 161)
 /*
-Summary: Returns the ASCII code of the first character absent from the strData string, starting at ASCII code intAscii. By default, ¡ (inverted exclamation mark ASCII 161) or the next available character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.
+Summary: Returns the ASCII code of the first character absent from the strData string, starting at ASCII code intAscii.
+By default, ¡ (inverted exclamation mark ASCII 161) or the next available character: ¢ (ASCII 162), £ (ASCII 163),
+¤ (ASCII 164), etc.
 */
 {
 	Loop

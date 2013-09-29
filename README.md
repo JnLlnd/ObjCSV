@@ -3,7 +3,7 @@
 
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
-Library home on GitHum [https://github.com/JnLlnd/ObjCSV](https://github.com/JnLlnd/ObjCSV)
+Library home on GitHub [https://github.com/JnLlnd/ObjCSV](https://github.com/JnLlnd/ObjCSV)
 2013-08-22+
 
 AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type

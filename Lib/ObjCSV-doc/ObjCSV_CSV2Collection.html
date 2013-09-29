@@ -9,9 +9,11 @@
 <body>
 
 <h1>ObjCSV_CSV2Collection()</h1>
-<p>Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by the ByRef variable strFieldNames. Delimiters are configurable.</p>
+<p>Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of
+the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by
+the ByRef variable strFieldNames. Delimiters are configurable.</p>
 
-<pre class="Syntax">ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, blnProgress = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strRecordDelimiter = &quot;`n&quot;, strOmitChars = &quot;`r&quot;, strEolReplacement = &quot;&quot;])</pre>
+<pre class="Syntax">ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strRecordDelimiter = &quot;`n&quot;, strOmitChars = &quot;`r&quot;, strEolReplacement = &quot;&quot;, strProgressText := &quot;&quot;])</pre>
 <h3>Parameters</h4>
 <table class="info">
 <tr>
@@ -20,7 +22,7 @@
 </tr>
 <tr>
   <td width="15%">strFieldNames</td>
-  <td width="85%">(ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, column numbers are used as object keys, starting at 1. Empty by default. Output: See RETURNED VALUES above.</td>
+  <td width="85%">(ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, column numbers are used as object keys, starting at 1. Empty by default. Output: See &quot;Returns:&quot; above.</td>
 </tr>
 <tr>
   <td width="15%">blnHeader</td>
@@ -31,8 +33,8 @@
   <td width="85%">(Optional) If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE-1: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details). NOTE-2: If blnMultiline is True, you can use the strEolReplacement parameter to specify a character (or string) that will be converted to line-breaks if found in the CSV file.</td>
 </tr>
 <tr>
-  <td width="15%">blnProgress</td>
-  <td width="85%">(Optional) If true (or 1), a progress bar is displayed. Should be use only for very large collections. False (or 0) by default.</td>
+  <td width="15%">intProgressType</td>
+  <td width="85%">(Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part &quot;n&quot; of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).</td>
 </tr>
 <tr>
   <td width="15%">strFieldDelimiter</td>
@@ -54,10 +56,14 @@
   <td width="15%">strEolReplacement</td>
   <td width="85%">(Optional) Character (or string) that will be converted to line-breaks if found in the CSV file. Replacements occur only when blnMultiline is True. Empty by default.</td>
 </tr>
+<tr>
+  <td width="15%">strProgressText</td>
+  <td width="85%">(Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string &quot;##&quot; is replaced with the percentage of progress. See also intProgressType above. Empty by default.</td>
+</tr>
 </table>
 <h3>Returns</h3>
 <p>This functions returns an object that contains an array of objects. This collection of objects can be viewed as a table in a database. Each object in the collection is like a record (or a line) in a table. These records are, in fact, associative arrays which contain a list key-value pairs. Key names are like field names (or column names) in the table. Key names are taken in the header of the CSV file, if it exists. Keys can be strings or integers, while values can be of any type that can be expressed as text. The records can be read using the syntax obj[1], obj[2] (...). Field values can be read using the syntax obj[1].keyname or, when field names contain spaces, obj[1][&quot;key name&quot;]. The &quot;Loop, Parse&quot; and &quot;For key, value in array&quot; commands allow to easily browse the content of these objects.</p>
-<p>If blnHeader is true (or 1), the ByRef variable strFieldNames returns a string containing the field names (object keys) read from the first line of the CSV file, in the format and in the order they appear in the file. If a field name is empty, it is replaced with &quot;Empty_&quot; and its field number.  If a field name is duplicated, the field number is added to the duplicate name.  If blnHeader is false (or 0), the value of strFieldNames is unchanged by the function.</p>
+<p>If blnHeader is true (or 1), the ByRef parameter strFieldNames returns a string containing the field names (object keys) read from the first line of the CSV file, in the format and in the order they appear in the file. If a field name is empty, it is replaced with &quot;Empty_&quot; and its field number.  If a field name is duplicated, the field number is added to the duplicate name.  If blnHeader is false (or 0), the value of strFieldNames is unchanged by the function.</p>
 
 </body>
 </html>
