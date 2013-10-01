@@ -964,11 +964,14 @@ CALL-FOR-HELP!
 
 
 
-GetFirstUnusedAsciiCode(strData, intAscii := 161)
+GetFirstUnusedAsciiCode(ByRef strData, intAscii := 161)
 /*
 Summary: Returns the ASCII code of the first character absent from the strData string, starting at ASCII code intAscii.
 By default, ¡ (inverted exclamation mark ASCII 161) or the next available character: ¢ (ASCII 162), £ (ASCII 163),
 ¤ (ASCII 164), etc.
+
+NOTE: Despite the use of ByRef for the parameter strData, the string is unchanged by the function. ByRef is used only
+to optimize memory usage by this function.
 */
 {
 	Loop
