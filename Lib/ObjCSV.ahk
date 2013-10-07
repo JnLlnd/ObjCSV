@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.2.7  2013-10-06  Memory management optimization and introduction of ErrorLevel results  
 			0.2.6  2013-09-29  Display progress using Progress bar or Status bar, customize progress messages, doc converted to GenDocs 3.0  
 			0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML),
 			optimize progress bars refresh rates  
@@ -41,7 +42,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.2.6
+	Version: v0.2.7
 */
 
 
@@ -73,15 +74,29 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		
 		If blnHeader is true (or 1), the ByRef parameter strFieldNames returns a string containing the field names (object keys) read from the first line of the CSV file, in the format and in the order they appear in the file. If a field name is empty, it is replaced with "Empty_" and its field number.  If a field name is duplicated, the field number is added to the duplicate name.  If blnHeader is false (or 0), the value of strFieldNames is unchanged by the function.
 
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 Out of memory / 2 Memory limit / 3 No unused character for replacement (returned by sub-function Prepare4Multilines) / 255 Unknown error. If the function produces an "Memory limit reached" error, increase the #MaxMem value (see the help file).
 */
 {
 	objCollection := Object() ; object that will be returned by the function (a collection or array of objects)
 	objHeader := Object() ; holds the keys (fields name) of the objects in the collection
-	FileRead, strData, %strFilePath%
+	try
+		FileRead, strData, %strFilePath% ; FileRead ignores #MaxMem and just reads the whole file into a variable
+	catch e
+	{
+		if InStr(e.message, "Out of memory")
+			ErrorLevel := 1 ; Out of memory
+		else
+			ErrorLevel := 255 ; Unknown error
+		return
+	}
 	if blnMultiline
+	{
 		chrEolReplacement := Prepare4Multilines(strData, strEncapsulator, intProgressType, strProgressText . " (1/2)")
-			; make sure each record temporarily stands on a single line *** not tested on files with eol other than `n
-	strData := Trim(strData, strRecordDelimiter)
+			; replace `n (but keep the `r) to make sure each record temporarily stands on a single line *** not tested on Unix files
+		if (ErrorLevel)
+			return
+	}
+	strData := Trim(strData, "`r`n")
 		; remove empty line (record) at the beginning or end of the string, if present
 	if (intProgressType)
 	{
@@ -128,7 +143,8 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			{
 				if (intProgressType)
 					ProgressStop(intProgressType)
-				return ; returns no object(more error friendly code could be added here)
+				ErrorLevel := 255 ; Unknown error
+				return ; returns no object
 			}
 		}
 		else
@@ -144,20 +160,10 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			{
 				if blnMultiline
 				{
-					StringReplace, strFieldData, strFieldData, %chrEolReplacement%, %strRecordDelimiter%, 1
-						; put back all original end-of-line chararchers in each field, if present
-						/*
-						Using %strRecordDelimiter% as replacement in the next command, eol are lost when saved
-						using ObjCSV_Collection2CSV and opened in Notepad. However, %strRecordDelimiter% seems
-						to work well in the previous command... Anyway, for safety (at least in the Windows
-						environment), I replaced it with `r`n in the next command.
-						For reference, see
-						http://www.autohotkey.com/board/topic/57364-best-practices-for-handling-newlines-internally-in-ahk/
-						and
-						http://peterbenjamin.com/seminars/crossplatform/texteol.html
-						*/
+					StringReplace, strFieldData, strFieldData, %chrEolReplacement%, `n, 1
+						; put back all original `n in each field, if present
 					StringReplace, strFieldData, strFieldData, %strEolReplacement%, `r`n, 1
-						; replace all user-supplied replacement character with end-of-line, if present
+						; replace all user-supplied replacement character with end-of-line (`r`n), if present
 				}
 				if StrLen(objHeader[A_Index])
 					objData[objHeader[A_Index]] := strFieldData ; we have field names in objHeader[A_Index]
@@ -168,10 +174,10 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			objCollection.Insert(objData) ; add the object (record) to the collection
 		}
 	}
-	objCollection.SetCapacity(0) ; reallocates the object's internal array to fit only its current content
 	if (intProgressType)
 		ProgressStop(intProgressType)
 	objHeader := ; release object
+	ErrorLevel := 0
 	return objCollection
 }
 ;================================================
@@ -225,6 +231,9 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 	}
 	if (blnOverwrite)
 		FileDelete, %strFilePath%
+	if StrLen(strFieldOrder) ; we put only these fields, in this order
+		objHeader := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+			; parse strFieldOrder handling encapsulated field names
 	Loop, %intMax% ; for each record in the collection
 	{
 		strRecord := "" ; line to add to the CSV file
@@ -238,8 +247,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
 			intLineNumber := A_Index
-			for intColIndex, strFieldName in ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
-				; parse strFieldOrder handling encapsulated field names
+			for intColIndex, strFieldName in objHeader
 			{
 				strValue := objCollection[intLineNumber][Trim(strFieldName)]
 				if (StrLen(strEolReplacement)) ; multiline field eol replacement
@@ -409,14 +417,24 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
-		None.
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File exists and should not be overwritten / 2 No HTML template / 3 Invalid encapsulator.
 */
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
+	{
+		ErrorLevel := 1 ; File exists and should not be overwritten
 		return
-	if !FileExist(strTemplateFile) or (StrLen(strTemplateEncapsulator) <> 1)
-		; if template is not provided or if variable encapsulator is not one character
+	}
+	if !FileExist(strTemplateFile)
+	{
+		ErrorLevel := 2 ; No HTML template
 		return
+	}
+	if StrLen(strTemplateEncapsulator) <> 1
+	{
+		ErrorLevel := 3 ; Invalid encapsulator
+		return
+	}
 	FileRead, strTemplate, %strTemplateFile%
 	intPos := InStr(strTemplate, strTemplateEncapsulator . "ROWS" . strTemplateEncapsulator)
 		; start of the row template
@@ -454,6 +472,7 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 	FileAppend, %strData%, %strFilePath%
 	if (intProgressType)
 		ProgressStop(intProgressType)
+	ErrorLevel := 0
 	return
 }
 ;================================================
@@ -488,11 +507,14 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
-		None.
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File exists and should not be overwritten
 */
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
+	{
+		ErrorLevel := 1 ; File exists and should not be overwritten
 		return
+	}
 	strData := "<?xml version='1.0'?>" . strEndOfLine . "<XMLExport>" . strEndOfLine
 		; initialize the XML data string with XML header
 	intMax := objCollection.MaxIndex()
@@ -519,6 +541,7 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 	FileAppend, %strData%, %strFilePath%
 	if (intProgressType)
 		ProgressStop(intProgressType)
+	ErrorLevel := 0
 	return
 }
 ;================================================
@@ -546,7 +569,7 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
-		None.
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 More than 200 columns.
 */
 {
 	objHeader := Object() ; holds the keys (fields name) of the objects in the collection
@@ -581,7 +604,8 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 	{
 		if (intProgressType)
 			ProgressStop(intProgressType)
-		return ; displays nothing in the ListView (more error friendly code could be added here)
+		ErrorLevel := 1 ; More than 200 columns
+		return ; displays nothing in the ListView
 	}
 	for intIndex, strFieldName in objHeader
 	{
@@ -611,6 +635,7 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 		ProgressStop(intProgressType)
 	Gui, Show
 	objHeader := ; release object
+	ErrorLevel := 0
 }
 ;================================================
 
@@ -702,7 +727,6 @@ ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder :=
 	}
 	if (intProgressType)
 		ProgressStop(intProgressType)
-	objCollection.SetCapacity(0) ; This reallocates the object's internal array to fit only its current content
 	objHeaderPositions := ; release object
 	return objCollection
 }
@@ -792,7 +816,6 @@ ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", intPro
 			; in the sorted collection
 		objCollectionSorted.Insert(objCollection[arrRecordKey2])
 	}
-	objCollectionSorted.SetCapacity(0) ; this reallocates the object's internal array to fit only its current content
 	if (intProgressType)
 		ProgressStop(intProgressType)
 	return objCollectionSorted
@@ -856,6 +879,8 @@ ObjCSV_ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
 
 	Returns:
 		Returns an object array from a delimiter-separated string.
+
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 Invalid delimiter or encapsulator.
 		
 	Remarks:
 		Based on ReturnDSVArray by DerRaphael (thanks for regex hard work).  
@@ -864,7 +889,10 @@ ObjCSV_ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
 {
 	objReturnObject := Object()             ; create a local object array that will be returned by the function
 	if ((StrLen(Delimiter)!=1)||(StrLen(Encapsulator)!=1))
+	{
+		ErrorLevel := 1
 		return                              ; return empty object indicating an error
+	}
 	strPreviousFormat := A_FormatInteger    ; save current interger format
 	SetFormat,integer,H                     ; needed for escaping the RegExNeedle properly
 	d := SubStr(ASC(delimiter)+0,2)         ; used as hex notation in the RegExNeedle
@@ -900,6 +928,7 @@ ObjCSV_ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
 		} Else
 			p0 := p1 + 1                    ; set the start of our RegEx Search to last result
 	}                                       ; added by one
+	ErrorLevel := 0
 	return objReturnObject                  ; return the object array to the function caller
 }
 
@@ -924,14 +953,15 @@ Prepare4Multilines(ByRef strCsvData, strFieldEncapsulator := """", intProgressTy
 		The function returns the replacement character for end-of-lines. Usualy ¡ (inverted exclamation mark, ASCII 161) or the next available safe character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.  The caller of this function *must* save this value in a variable and *must* do the reverse replacement with `n at the appropriate step inside a "Loop, Parse" command.  
 		  
 		The ByRef parameter returns the data string with all end-of-line characters (`n) replaced with the safe replacement character.
+
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 2 Memory limit / 3 No unused character for replacement (returned by sub-function GetFirstUnusedAsciiCode) / 255 Unknown error. If the function produces an "Memory limit reached" error, increase the #MaxMem value (see the help file).
 */
 /*
 CALL-FOR-HELP!
 	#1 This function uses a very rudimentary algorithm to do the replacements only when the end-of-line charaters are
 	enclosed between double-quotes. I'm confident my code is safe. But there is certainly a more efficient way to
 	accomplish this: RegEx command or another approach? Any help appreciated here :-)
-	#2 Need help to test it / make sure this work with ASCII files with end-of-line character other than `n (works well
-	on DOS files, need to be tested on Unix or Mac text files -
+	#2 Need help to test it / make sure this work with ASCII files produced on Unix or Mac systems
 	see http://peterbenjamin.com/seminars/crossplatform/texteol.html)
 */
 {
@@ -942,6 +972,19 @@ CALL-FOR-HELP!
 		ProgressStart(intProgressType, intMaxProgress, strProgressText)
 	}
 	intEolReplacementAsciiCode := GetFirstUnusedAsciiCode(strCsvData) ; Usualy ¡ (inverted exclamation mark, ASCII 161)
+	if (ErrorLevel) ; No unused character for replacement
+		return
+	try
+		strTestMemCapacity := strCsvData ; test if we have enough room inside #MaxMem to create a copy of strCsvData
+	catch e
+	{
+		if InStr(e.message, "Memory limit")
+			ErrorLevel := 2 ; File too large (Memory limit reached - see #MaxMem in the help file)
+		else
+			ErrorLevel := 255 ; Unknown error
+		return
+	}
+	strTestMemCapacity := "" ; release memory used by strTestMemCapacity
 	blnInsideEncapsulators := false
 	Loop, Parse, strCsvData
 		; parsing on a temporary copy of strCsvData -  so we can update the original strCsvData inside the loop
@@ -959,6 +1002,7 @@ CALL-FOR-HELP!
 	}
 	if (intProgressType)
 		ProgressStop(intProgressType)
+	ErrorLevel := 0
 	return Chr(intEolReplacementAsciiCode)
 }
 
@@ -970,6 +1014,8 @@ Summary: Returns the ASCII code of the first character absent from the strData s
 By default, ¡ (inverted exclamation mark ASCII 161) or the next available character: ¢ (ASCII 162), £ (ASCII 163),
 ¤ (ASCII 164), etc.
 
+At the end of execution, the function sets ErrorLevel to: 0 No error / 3 No unused character.
+
 NOTE: Despite the use of ByRef for the parameter strData, the string is unchanged by the function. ByRef is used only
 to optimize memory usage by this function.
 */
@@ -977,8 +1023,15 @@ to optimize memory usage by this function.
 	Loop
 		if InStr(strData, Chr(intAscii))
 			intAscii := intAscii + 1
+		else if (intAscii > 255) ; no more candidate to check
+		{
+			intAscii := 0
+			ErrorLevel := 3 ; No unused character
+			break
+		}
 		else
 			break
+	ErrorLevel := 0
 	return intAscii
 }
 
