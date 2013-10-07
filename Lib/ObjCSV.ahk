@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.2.8  2013-10-06  Fix bug in progress start and stop  
 			0.2.7  2013-10-06  Memory management optimization and introduction of ErrorLevel results  
 			0.2.6  2013-09-29  Display progress using Progress bar or Status bar, customize progress messages, doc converted to GenDocs 3.0  
 			0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML),
@@ -1083,13 +1084,14 @@ MakeXMLRow(objRow, strEndOfLine)
 
 ProgressStart(intType, intMax, strText)
 {
+	Gui, +Disabled
 	if (intType = 1)
-	{
-		Gui, +Disabled
 		Progress, R0-%intMax% FS8 A, %strText%, , , MS Sans Serif
-	}
 	else
+	{
+		StringReplace, strText, strText, ##, "0"
 		SB_SetText(strText, -intType)
+	}
 }
 
 
@@ -1109,11 +1111,9 @@ ProgressUpdate(intType, intActual, intMax, strText)
 
 ProgressStop(intType)
 {
+	Gui, -Disabled
 	if (intType = 1)
-	{
 		Progress, Off
-		Gui, -Disabled
-	}
 	else
 		SB_SetText("", -intType)
 }
