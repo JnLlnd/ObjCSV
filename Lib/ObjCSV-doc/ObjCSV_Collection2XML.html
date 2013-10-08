@@ -22,7 +22,7 @@
   &lt;/Record&gt;
 &lt;/XMLExport&gt;</pre>
 
-<pre class="Syntax">ObjCSV_Collection2XML(objCollection, strFilePath [, intProgressType = 0, blnOverwrite = 0, strEndOfLine = &quot;`r`n&quot;, strProgressText = &quot;&quot;])</pre>
+<pre class="Syntax">ObjCSV_Collection2XML(objCollection, strFilePath [, intProgressType = 0, blnOverwrite = 0, strProgressText = &quot;&quot;])</pre>
 <h3>Parameters</h4>
 <table class="info">
 <tr>
@@ -42,16 +42,12 @@
   <td width="85%">(Optional) If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.</td>
 </tr>
 <tr>
-  <td width="15%">strEndOfLine</td>
-  <td width="85%">(Optional) Character(s) inserted at end-of-lines. Can be <code>r</code>n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.</td>
-</tr>
-<tr>
   <td width="15%">strProgressText</td>
   <td width="85%">(Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string &quot;##&quot; is replaced with the percentage of progress. See also intProgressType above. Empty by default.</td>
 </tr>
 </table>
 <h3>Returns</h3>
-<p>None.</p>
+<p>At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File exists and should not be overwritten</p>
 
 </body>
 </html>

@@ -28,7 +28,9 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
-			0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by `r`n (CR-LF). Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed, ObjCSV_Collection2HTML, ObjCSV_Collection2XML, ObjCSV_Format4CSV and ObjCSV_ReturnDSVObjectArray  
+			0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by ``r``n (CR-LF).  
+			Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed,  
+			ObjCSV_Collection2HTML, ObjCSV_Collection2XML, ObjCSV_Format4CSV and ObjCSV_ReturnDSVObjectArray  
 			0.2.8  2013-10-06  Fix bug in progress start and stop  
 			0.2.7  2013-10-06  Memory management optimization and introduction of ErrorLevel results  
 			0.2.6  2013-09-29  Display progress using Progress bar or Status bar, customize progress messages, doc converted to GenDocs 3.0  
@@ -833,10 +835,10 @@ ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """")
 		String with required encapsulator.
 		
 	Remarks:
-		Based on Format4CSV by Rhys ([http://www.autohotkey.com/forum/topic27233.html](http://www.autohotkey.com/forum/topic27233.html))  
+		Based on Format4CSV by Rhys ([http://www.autohotkey.com/forum/topic27233.html](http://www.autohotkey.com/forum/topic27233.html)).  
 		  
-		Added the strFieldDelimiter parameter to make it work with separators other than comma  
-		Added the strEncapsulator parameter to make it work with other encapsultors than double-quotes
+		Added the strFieldDelimiter parameter to make it work with separators other than comma.  
+		Added the strEncapsulator parameter to make it work with other encapsultors than double-quotes.
 */
 {
    Reformat:=False ; Assume String is OK
@@ -864,7 +866,7 @@ ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """")
 ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsulator := """")
 /*!
 	Function: ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter = ",", strEncapsulator = """")
-		Returns an object array from a strDelimiter-separated string.
+		Returns an object array from a delimiter-separated string.
 		  
 	Parameters:
 		strCurrentDSVLine - String to convert to an object array
@@ -878,7 +880,7 @@ ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsula
 		
 	Remarks:
 		Based on ReturnDSVArray by DerRaphael (thanks for regex hard work).  
-		See strDelimiter Seperated Values by DerRaphael ([http://www.autohotkey.com/forum/post-203280.html#203280](http://www.autohotkey.com/forum/post-203280.html#203280))
+		See strDelimiter Seperated Values by DerRaphael ([http://www.autohotkey.com/forum/post-203280.html#203280](http://www.autohotkey.com/forum/post-203280.html#203280)).
 */
 {
 	objReturnObject := Object()             ; create a local object array that will be returned by the function

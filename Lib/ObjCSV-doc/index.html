@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<h1>ObjCSV Library - Version v0.2.6 - by By Jean Lalonde</h1>
+<h1>ObjCSV Library - Version v0.3.0 - by By Jean Lalonde</h1>
 <p>AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
 Object data type.<br/></p>
 <ul>
@@ -36,7 +36,12 @@ AutoHotkey_L v1.1.09.03+ (<a href="http://l.autohotkey.net/">http://l.autohotkey
 </ul>
 <p>You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)</p>
 <h3 id="versions-history">VERSIONS HISTORY</h3>
-<p>0.2.6  2013-09-29  Display progress using Progress bar or Status bar, customize progress messages, doc converted to GenDocs 3.0<br/>
+<p>0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by <code>`r</code>`n (CR-LF).<br/>
+Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed,<br/>
+ObjCSV_Collection2HTML, ObjCSV_Collection2XML, ObjCSV_Format4CSV and ObjCSV_ReturnDSVObjectArray<br/>
+0.2.8  2013-10-06  Fix bug in progress start and stop<br/>
+0.2.7  2013-10-06  Memory management optimization and introduction of ErrorLevel results<br/>
+0.2.6  2013-09-29  Display progress using Progress bar or Status bar, customize progress messages, doc converted to GenDocs 3.0<br/>
 0.2.5  2013-09-26  Optimize large variables management in save functions (2CSV, 2Fixed, 2HTML and 2XML),
 optimize progress bars refresh rates<br/>
 0.2.4  2013-09-25  Fix a bug adding progress bar in ObjCSV_ListView2Collection<br/>

@@ -13,7 +13,7 @@
 the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by
 the ByRef variable strFieldNames. Delimiters are configurable.</p>
 
-<pre class="Syntax">ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strRecordDelimiter = &quot;`n&quot;, strOmitChars = &quot;`r&quot;, strEolReplacement = &quot;&quot;, strProgressText := &quot;&quot;])</pre>
+<pre class="Syntax">ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strEolReplacement = &quot;&quot;, strProgressText := &quot;&quot;])</pre>
 <h3>Parameters</h4>
 <table class="info">
 <tr>
@@ -43,14 +43,6 @@ the ByRef variable strFieldNames. Delimiters are configurable.</p>
 <tr>
   <td width="15%">strEncapsulator</td>
   <td width="85%">(Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: &quot;one &quot;&quot;quoted&quot;&quot; word&quot;. All fields and headers in the CSV file can be encapsulated, if desired by the file creator. Double-quote by default.</td>
-</tr>
-<tr>
-  <td width="15%">strRecordDelimiter</td>
-  <td width="85%">(Optional) Record delimiter in the CSV file. Rarely modified. Default value is end-of-line (`n).</td>
-</tr>
-<tr>
-  <td width="15%">strOmitChars</td>
-  <td width="85%">(Optional) List of characters (case sensitive) to exclude from beginning and end of lines. By default <code>r (carriage return) to support text files with both </code>r<code>n (carriage return+linefeed) and </code>n (linefeed) end-of-lines.</td>
 </tr>
 <tr>
   <td width="15%">strEolReplacement</td>
