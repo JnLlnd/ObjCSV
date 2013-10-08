@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by `r`n (CR-LF). Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed, ObjCSV_Collection2HTML, ObjCSV_Collection2XML, ObjCSV_Format4CSV and ObjCSV_ReturnDSVObjectArray  
 			0.2.8  2013-10-06  Fix bug in progress start and stop  
 			0.2.7  2013-10-06  Memory management optimization and introduction of ErrorLevel results  
 			0.2.6  2013-09-29  Display progress using Progress bar or Status bar, customize progress messages, doc converted to GenDocs 3.0  
@@ -43,16 +44,15 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.2.7
+	Version: v0.3.0
 */
 
 
 ;================================================
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, intProgressType := 0
-	, strFieldDelimiter := ",", strEncapsulator := """", strRecordDelimiter := "`n", strOmitChars := "`r"
-	, strEolReplacement := "", strProgressText := "")
+	, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := "", strProgressText := "")
 /*!
-	Function: ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strRecordDelimiter = "`n", strOmitChars = "`r", strEolReplacement = "", strProgressText := ""])
+	Function: ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText := ""])
 		Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of
 		the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by
 		the ByRef variable strFieldNames. Delimiters are configurable.
@@ -65,8 +65,6 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
 		strFieldDelimiter - (Optional) Field delimiter in the CSV file. One character, usually comma (default value) or tab. According to locale setting of software (e.g. MS Office) or user preferences, delimiter can be semi-colon (;), pipe (|), space, etc. NOTE-1: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters. NOTE-2: Using the Trim function, %A_Space% and %A_Tab% (when tab is not a delimiter) are removed from the beginning and end of all field names and data.
 		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". All fields and headers in the CSV file can be encapsulated, if desired by the file creator. Double-quote by default.
-		strRecordDelimiter - (Optional) Record delimiter in the CSV file. Rarely modified. Default value is end-of-line (`n).
-		strOmitChars - (Optional) List of characters (case sensitive) to exclude from beginning and end of lines. By default `r (carriage return) to support text files with both `r`n (carriage return+linefeed) and `n (linefeed) end-of-lines.
 		strEolReplacement - (Optional) Character (or string) that will be converted to line-breaks if found in the CSV file. Replacements occur only when blnMultiline is True. Empty by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
@@ -98,7 +96,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			return
 	}
 	strData := Trim(strData, "`r`n")
-		; remove empty line (record) at the beginning or end of the string, if present
+		; remove empty line (record) at the beginning or end of the string, if present *** not tested on Unix files
 	if (intProgressType)
 	{
 		intMaxProgress := StrLen(strData)
@@ -109,7 +107,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			strProgressText := strProgressText . " (2/2)"
 		ProgressStart(intProgressType, intMaxProgress, strProgressText)
 	}
-	Loop, Parse, strData, %strRecordDelimiter%, %strOmitChars% ; read each line (record) of the CSV file
+	Loop, Parse, strData, `n, `r ; read each line (record) of the CSV file
 	{
 		intProgressIndex := intProgressIndex + StrLen(A_LoopField) + 2
 		intProgressThisBatch := intProgressThisBatch + StrLen(A_LoopField) + 2
@@ -164,7 +162,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 					StringReplace, strFieldData, strFieldData, %chrEolReplacement%, `n, 1
 						; put back all original `n in each field, if present
 					StringReplace, strFieldData, strFieldData, %strEolReplacement%, `r`n, 1
-						; replace all user-supplied replacement character with end-of-line (`r`n), if present
+						; replace all user-supplied replacement character with end-of-line (`r`n), if present *** not tested on Unix files
 				}
 				if StrLen(objHeader[A_Index])
 					objData[objHeader[A_Index]] := strFieldData ; we have field names in objHeader[A_Index]
@@ -187,10 +185,10 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 
 ;================================================
 ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", intProgressType := 0
-	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n"
-	, strEolReplacement := "", strProgressText := "")
+	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
+	, strProgressText := "")
 /*!
-	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`r`n", strEolReplacement = "", strProgressText = ""])
+	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = ""])
 		Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.
 
 	Parameters:
@@ -202,7 +200,6 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0), content is appended to the existing file. False (or 0) by default. NOTE: If content is appended to an existing file, fields names and order should be the same as in the existing file.
 		strFieldDelimiter - (Optional) Delimiter inserted between fields in the CSV file. Also used as delimiter in the above parameter strFieldOrder. One character, usually comma, tab or semi-colon. You can choose other delimiters like pipe (|), space, etc. Comma by default. NOTE: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters.
 		strEncapsulator - (Optional) One character (usualy double-quote) inserted in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
-		strEndOfLine - (Optional) Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
 		strEolReplacement - (Optional) When empty, multi-line fields are saved unchanged. If not empty, end-of-line in multi-line fields are replaced by the character or string strEolReplacement. Empty by default. NOTE: Strings including replaced end-of-line will still be encapsulated with the strEncapsulator character.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
@@ -228,7 +225,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 					. strFieldDelimiter
 			StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
 		}
-		strData := strFieldOrder . strEndOfLine ; put this header as first line of the file
+		strData := strFieldOrder . "`r`n" ; put this header as first line of the file
 	}
 	if (blnOverwrite)
 		FileDelete, %strFilePath%
@@ -265,7 +262,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
 			}
 		StringTrimRight, strRecord, strRecord, 1 ; remove extra field delimiter
-		strData := strData . strRecord . strEndOfLine
+		strData := strData . strRecord . "`r`n"
 	}
 	FileAppend, %strData%, %strFilePath%
 	if (intProgressType)
@@ -278,10 +275,10 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 
 ;================================================
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", intProgressType := 0
-	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEndOfLine := "`r`n"
-	, strEolReplacement := "", strProgressText := "")
+	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
+	, strProgressText := "")
 /*!
-	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEndOfLine = "`r`n", strEolReplacement = "", strProgressText = ""])
+	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = ""])
 		Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
 
 	Parameters:
@@ -294,7 +291,6 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0), content is appended to the existing file. False (or 0) by default. NOTE: If content is appended to an existing file, fields names and order should be the same as in the existing file.
 		strFieldDelimiter - (Optional) Delimiter inserted between fields names in the strFieldOrder parameter and fields width in the strWidth parameter. This delimiter is NOT used in the file data. One character, usually comma, tab or semi-colon. You can choose other delimiters like pipe (|), space, etc. Comma by default. NOTE: End of line characters (`n or `r) are prohibited as field separator since they are used as record delimiters.
 		strEncapsulator - (Optional) One character (usualy double-quote) inserted in the strFieldOrder parameter to embed field names that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: "one ""quoted"" word". Double-quote by default. This delimiter is NOT used in the file data.
-		strEndOfLine - (Optional) Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
 		strEolReplacement - (Optional) A fixed-width file should not include end-of-line within data. If it does and if a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
@@ -333,7 +329,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 				intColIndex := intColIndex + 1
 			}
 		}
-		strData := strHeaderFixed . strEndOfLine ; put this header as first line of the file
+		strData := strHeaderFixed . "`r`n" ; put this header as first line of the file
 	}
 	if (blnOverwrite)
 		FileDelete, %strFilePath%
@@ -372,7 +368,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 				intColIndex := intColIndex + 1
 			}
 		}
-		strData := strData . strRecord . strEndOfLine ; add record to the file
+		strData := strData . strRecord . "`r`n" ; add record to the file
 	}
 	FileAppend, %strData%, %strFilePath%
 	if (intProgressType)
@@ -385,9 +381,9 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 
 ;================================================
 ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateEncapsulator := "~", intProgressType := 0
-	, blnOverwrite := 0, strEndOfLine := "`r`n", strProgressText := "")
+	, blnOverwrite := 0, strProgressText := "")
 /*!
-	Function: ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, intProgressType = 0, blnOverwrite = 0, strEndOfLine = "`r`n", strProgressText = ""])
+	Function: ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, intProgressType = 0, blnOverwrite = 0, strProgressText = ""])
 		Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
 
 	Parameters:
@@ -414,7 +410,6 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 		strTemplateEncapsulator - (Optional) One character used to encapsulate markups and variable names in the template. By default ~ (tilde).
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
 		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
-		strEndOfLine - (Optional) Character(s) inserted between records at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
@@ -466,7 +461,7 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 			strData := ""
 		}
 		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) 
-			. strEndOfLine ; replace variables in the row template and append to the HTML data string
+			. "`r`n" ; replace variables in the row template and append to the HTML data string
 	}
 	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator)
 		; replace variables in the footer template and append to the HTML data string
@@ -482,10 +477,9 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 
 
 ;================================================
-ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverwrite := 0, strEndOfLine := "`r`n"
-	, strProgressText := "")
+ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverwrite := 0, strProgressText := "")
 /*!
-	Function: ObjCSV_Collection2XML(objCollection, strFilePath [, intProgressType = 0, blnOverwrite = 0, strEndOfLine = "`r`n", strProgressText = ""])
+	Function: ObjCSV_Collection2XML(objCollection, strFilePath [, intProgressType = 0, blnOverwrite = 0, strProgressText = ""])
 		Builds an XML file from the content of the collection. The calling script must ensure that field names and field data comply with the rules of XML syntax. This simple example, where each record has two fields named "Field1" and "Field2", shows the XML output format:
 			> <?xml version='1.0'?>
 			> <XMLExport>
@@ -504,7 +498,6 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 		strFilePath - The name of the XML file, which is assumed to be in %A_WorkingDir% if an absolute path isn't specified.
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
 		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
-		strEndOfLine - (Optional) Character(s) inserted at end-of-lines. Can be `r`n (carriage return+linefeed) or `n (linefeed alone) depending on OS text file formats. Carriage return + Linefeed by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
@@ -516,7 +509,7 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 		ErrorLevel := 1 ; File exists and should not be overwritten
 		return
 	}
-	strData := "<?xml version='1.0'?>" . strEndOfLine . "<XMLExport>" . strEndOfLine
+	strData := "<?xml version='1.0'?>`r`n<XMLExport>`r`n"
 		; initialize the XML data string with XML header
 	intMax := objCollection.MaxIndex()
 	if (intProgressType)
@@ -535,10 +528,10 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 			FileAppend, %strData%, %strFilePath%
 			strData := ""
 		}
-		strData := strData . MakeXMLRow(objCollection[A_Index], strEndOfLine)
+		strData := strData . MakeXMLRow(objCollection[A_Index])
 			; append XML for this row to the XML data string
 	}
-	strData := strData . "</XMLExport>" . strEndOfLine ; append XML footer to the XML data string
+	strData := strData . "</XMLExport>`r`n" ; append XML footer to the XML data string
 	FileAppend, %strData%, %strFilePath%
 	if (intProgressType)
 		ProgressStop(intProgressType)
@@ -826,13 +819,13 @@ ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", intPro
 
 
 ;================================================
-ObjCSV_Format4CSV(F4C_String, strFieldDelimiter := ",", strEncapsulator := """")
+ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """")
 /*!
-	Function: ObjCSV_Format4CSV(F4C_String [, strFieldDelimiter = ",", strEncapsulator = """"])
-		Add encapsulator before and after F4C_String if the string includes line breaks, field delimiter or field encapsulator. Encapsulated field encapsulators are doubled.
+	Function: ObjCSV_Format4CSV(strF4C [, strFieldDelimiter = ",", strEncapsulator = """"])
+		Add encapsulator before and after strF4C if the string includes line breaks, field delimiter or field encapsulator. Encapsulated field encapsulators are doubled.
 		  
 	Parameters:
-		F4C_String - String to convert to CSV format
+		strF4C - String to convert to CSV format
 		strFieldDelimiter - (Optional) Field delimiter. One character, usually comma (default value) or tab.
 		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
 
@@ -847,78 +840,78 @@ ObjCSV_Format4CSV(F4C_String, strFieldDelimiter := ",", strEncapsulator := """")
 */
 {
    Reformat:=False ; Assume String is OK
-   IfInString, F4C_String,`n ; Check for linefeeds
+   IfInString, strF4C,`n ; Check for linefeeds
       Reformat:=True ; String must be bracketed by double-quotes
-   IfInString, F4C_String,`r ; Check for linefeeds
+   IfInString, strF4C,`r ; Check for linefeeds
       Reformat:=True
-   IfInString, F4C_String,%strFieldDelimiter% ; Check for field delimiter
+   IfInString, strF4C,%strFieldDelimiter% ; Check for field delimiter
       Reformat:=True
-   IfInString, F4C_String, %strEncapsulator% ; Check for encapsulator
+   IfInString, strF4C, %strEncapsulator% ; Check for encapsulator
    {
       Reformat:=True
-      StringReplace, F4C_String, F4C_String, %strEncapsulator%, %strEncapsulator%%strEncapsulator%, All
+      StringReplace, strF4C, strF4C, %strEncapsulator%, %strEncapsulator%%strEncapsulator%, All
 		; The original encapsulator need to be double encapsulator
    }
    If (Reformat)
-      F4C_String= %strEncapsulator%%F4C_String%%strEncapsulator% ; If needed, bracket the string in encapsulators
-   Return, F4C_String
+      strF4C= %strEncapsulator%%strF4C%%strEncapsulator% ; If needed, bracket the string in encapsulators
+   Return, strF4C
 }
 ;================================================
 
 
 
 ;================================================
-ObjCSV_ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
+ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsulator := """")
 /*!
-	Function: ObjCSV_ReturnDSVObjectArray(CurrentDSVLine, Delimiter=",", Encapsulator="""")
-		Returns an object array from a delimiter-separated string.
+	Function: ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter = ",", strEncapsulator = """")
+		Returns an object array from a strDelimiter-separated string.
 		  
 	Parameters:
-		CurrentDSVLine - String to convert to an object array
-		Delimiter - (Optional) Field delimiter. One character, usually comma (default value) or tab.
-		Encapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
+		strCurrentDSVLine - String to convert to an object array
+		strDelimiter - (Optional) Field strDelimiter. One character, usually comma (default value) or tab.
+		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field strDelimiters or the strEncapsulator character itself. In this last case, the strEncapsulator character must be doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
 
 	Returns:
-		Returns an object array from a delimiter-separated string.
+		Returns an object array from a strDelimiter-separated string.
 
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 Invalid delimiter or encapsulator.
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 Invalid strDelimiter or strEncapsulator.
 		
 	Remarks:
 		Based on ReturnDSVArray by DerRaphael (thanks for regex hard work).  
-		See Delimiter Seperated Values by DerRaphael ([http://www.autohotkey.com/forum/post-203280.html#203280](http://www.autohotkey.com/forum/post-203280.html#203280))
+		See strDelimiter Seperated Values by DerRaphael ([http://www.autohotkey.com/forum/post-203280.html#203280](http://www.autohotkey.com/forum/post-203280.html#203280))
 */
 {
 	objReturnObject := Object()             ; create a local object array that will be returned by the function
-	if ((StrLen(Delimiter)!=1)||(StrLen(Encapsulator)!=1))
+	if ((StrLen(strDelimiter)!=1)||(StrLen(strEncapsulator)!=1))
 	{
 		ErrorLevel := 1
 		return                              ; return empty object indicating an error
 	}
 	strPreviousFormat := A_FormatInteger    ; save current interger format
 	SetFormat,integer,H                     ; needed for escaping the RegExNeedle properly
-	d := SubStr(ASC(delimiter)+0,2)         ; used as hex notation in the RegExNeedle
-	e := SubStr(ASC(encapsulator)+0,2)      ; used as hex notation in the RegExNeedle
+	d := SubStr(ASC(strDelimiter)+0,2)         ; used as hex notation in the RegExNeedle
+	e := SubStr(ASC(strEncapsulator)+0,2)      ; used as hex notation in the RegExNeedle
 	SetFormat,integer,%strPreviousFormat%   ; restore previous integer format
 
 	p0 := 1                                 ; Start of search at char p0 in DSV Line
 	fieldCount := 0                         ; start off with empty fields.
-	CurrentDSVLine .= delimiter             ; Add delimiter, otherwise last field
+	strCurrentDSVLine .= strDelimiter             ; Add strDelimiter, otherwise last field
 	;                                         won't get recognized
 	Loop
 	{
 		RegExNeedle := "\" d "(?=(?:[^\" e "]*\" e "[^\" e "]*\" e ")*(?![^\" e "]*\" e "))"
-		p1 := RegExMatch(CurrentDSVLine,RegExNeedle,tmp,p0)
+		p1 := RegExMatch(strCurrentDSVLine,RegExNeedle,tmp,p0)
 		; p1 contains now the position of our current delimitor in a 1-based index
 		fieldCount++                        ; add count
-		field := SubStr(CurrentDSVLine,p0,p1-p0)
+		field := SubStr(strCurrentDSVLine,p0,p1-p0)
 		; This is the Line you'll have to change if you want different treatment
 		; otherwise your resulting fields from the DSV data Line will be stored in an object array
-		if (SubStr(field,1,1)=encapsulator)
+		if (SubStr(field,1,1)=strEncapsulator)
 		{
-			; This is the exception handling for removing any doubled encapsulators and
-			; leading/trailing encapsulator chars
+			; This is the exception handling for removing any doubled strEncapsulators and
+			; leading/trailing strEncapsulator chars
 			field := RegExReplace(field,"^\" e "|\" e "$")
-			StringReplace,field,field,% encapsulator encapsulator,%encapsulator%, All
+			StringReplace,field,field,% strEncapsulator strEncapsulator,%strEncapsulator%, All
 		}
 		objReturnObject.Insert(Trim(field)) ; add an item in the object array and assign our value to it
 		;                                     Trim not in the original ReturnDSVArray but added for my script needs
@@ -1070,13 +1063,12 @@ MakeHTMLRow(strTemplate, objRow, intRow, strEncapsulator)
 
 
 
-MakeXMLRow(objRow, strEndOfLine)
+MakeXMLRow(objRow)
 {
-	strOutput := A_Tab . "<Record>" . strEndOfLine
+	strOutput := A_Tab . "<Record>`r`n"
 	for strFieldName, strValue in objRow
-		strOutput := strOutput . A_Tab . A_Tab . "<" . strFieldName .  ">" . strValue . "</" . strFieldName .  ">"
-			. strEndOfLine
-	strOutput := strOutput . A_Tab . "</Record>" . strEndOfLine
+		strOutput := strOutput . A_Tab . A_Tab . "<" . strFieldName .  ">" . strValue . "</" . strFieldName .  ">`r`n"
+	strOutput := strOutput . A_Tab . "</Record>`r`n"
 	return %strOutput%
 }
 

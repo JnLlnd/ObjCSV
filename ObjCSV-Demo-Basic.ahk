@@ -1,5 +1,5 @@
 ;===============================================
-/* ObjCSV Demo Basic v0.1
+/* ObjCSV Demo Basic v0.2
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 2013-08-22+
@@ -84,6 +84,7 @@ return
 ButtonChange:
 if !LV_GetCount("") ; ListView is empty
 	return
+Gui +OwnDialogs
 blnAlternate := !blnAlternate
 Loop, % LV_GetCount("") ; loop in each row in the ListView
 {
@@ -112,7 +113,7 @@ if not strFile ; The user canceled the dialog.
 	return
 obj := ObjCSV_ListView2Collection() ; load the ListView data to a collection of objects 
 strFields := "str_Name,str_Album,lng_Track_Number,str_Genre,lng_Total_Time,lng_Size" ;  field order in the saved file
-ObjCSV_Collection2CSV(obj, strFile, 1, strFields) ; save the collection of objects to a CSV file
+ObjCSV_Collection2CSV(obj, strFile, 1, strFields, , 1) ; save the collection of objects to a CSV file and overwrite this file
 MsgBox, 4, Display file?, File saved:`n`n%strFile%`n`nDisplay file?
 IfMsgBox, Yes
 	Run %strFile%
