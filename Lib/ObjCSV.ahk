@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.3.1  2013-10-10  Fix ProgressStop missing bug, fix numeric column names bug  
 			0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by ``r``n (CR-LF).  
 			Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed,  
 			ObjCSV_Collection2HTML, ObjCSV_Collection2XML, ObjCSV_Format4CSV and ObjCSV_ReturnDSVObjectArray  
@@ -46,7 +47,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.3.0
+	Version: v0.3.1
 */
 
 
@@ -61,7 +62,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 
 	Parameters:
 		strFilePath - Path of the file to load, which is assumed to be in A_WorkingDir if an absolute path isn't specified.
-		strFieldNames - (ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, column numbers are used as object keys, starting at 1. Empty by default. Output: See "Returns:" above.
+		strFieldNames - (ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, "C" + column numbers are used as object keys, starting at 1. Empty by default. Output: See "Returns:" above.
 		blnHeader - (Optional) If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True (or 1) by default.
 		blnMultiline - (Optional) If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE-1: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details). NOTE-2: If blnMultiline is True, you can use the strEolReplacement parameter to specify a character (or string) that will be converted to line-breaks if found in the CSV file.
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
@@ -88,6 +89,8 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			ErrorLevel := 1 ; Out of memory
 		else
 			ErrorLevel := 255 ; Unknown error
+		if (intProgressType)
+			ProgressStop(intProgressType)
 		return
 	}
 	if blnMultiline
@@ -95,7 +98,11 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		chrEolReplacement := Prepare4Multilines(strData, strEncapsulator, intProgressType, strProgressText . " (1/2)")
 			; replace `n (but keep the `r) to make sure each record temporarily stands on a single line *** not tested on Unix files
 		if (ErrorLevel)
+		{
+			if (intProgressType)
+				ProgressStop(intProgressType)
 			return
+		}
 	}
 	strData := Trim(strData, "`r`n")
 		; remove empty line (record) at the beginning or end of the string, if present *** not tested on Unix files
@@ -169,8 +176,8 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 				if StrLen(objHeader[A_Index])
 					objData[objHeader[A_Index]] := strFieldData ; we have field names in objHeader[A_Index]
 				else
-					objData[A_Index] := strFieldData
-						; we don't have field names so we use index numbers as key/field names
+					objData["C" . A_Index] := strFieldData
+						; we don't have field names so we use "C" + index numbers as key/field names
 			}
 			objCollection.Insert(objData) ; add the object (record) to the collection
 		}
@@ -420,16 +427,22 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
 	{
+		if (intProgressType)
+			ProgressStop(intProgressType)
 		ErrorLevel := 1 ; File exists and should not be overwritten
 		return
 	}
 	if !FileExist(strTemplateFile)
 	{
+		if (intProgressType)
+			ProgressStop(intProgressType)
 		ErrorLevel := 2 ; No HTML template
 		return
 	}
 	if StrLen(strTemplateEncapsulator) <> 1
 	{
+		if (intProgressType)
+			ProgressStop(intProgressType)
 		ErrorLevel := 3 ; Invalid encapsulator
 		return
 	}
@@ -508,6 +521,8 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
 	{
+		if (intProgressType)
+			ProgressStop(intProgressType)
 		ErrorLevel := 1 ; File exists and should not be overwritten
 		return
 	}
@@ -1023,7 +1038,7 @@ to optimize memory usage by this function.
 		{
 			intAscii := 0
 			ErrorLevel := 3 ; No unused character
-			break
+			return
 		}
 		else
 			break
@@ -1083,7 +1098,7 @@ ProgressStart(intType, intMax, strText)
 		Progress, R0-%intMax% FS8 A, %strText%, , , MS Sans Serif
 	else
 	{
-		StringReplace, strText, strText, ##, "0"
+		StringReplace, strText, strText, ##, 0
 		SB_SetText(strText, -intType)
 	}
 }
