@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<h1>ObjCSV Library - Version v0.3.0 - by By Jean Lalonde</h1>
+<h1>ObjCSV Library - Version v0.3.2 - by By Jean Lalonde</h1>
 <p>AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
 Object data type.<br/></p>
 <ul>
@@ -24,7 +24,7 @@ AutoHotkey_L v1.1.09.03+ (<a href="http://l.autohotkey.net/">http://l.autohotkey
 <ul>
 <li><a href="https://github.com/JnLlnd/ObjCSV">Home of this library is on GitHub</a></li>
 <li><a href="https://raw.github.com/JnLlnd/ObjCSV/master/Lib/ObjCSV.ahk">The most up-to-date version of this AHK file on GitHub</a></li>
-<li><a href="http://jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/">Online ObjCSV Library Help</a></li>
+<li><a href="http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/">Online ObjCSV Library Help</a></li>
 <li><a href="http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/">Topic about this library on AutoHotkey forum</a></li>
 </ul>
 <h3 id="instructions">INSTRUCTIONS</h3>
@@ -36,7 +36,9 @@ AutoHotkey_L v1.1.09.03+ (<a href="http://l.autohotkey.net/">http://l.autohotkey
 </ul>
 <p>You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)</p>
 <h3 id="versions-history">VERSIONS HISTORY</h3>
-<p>0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by <code>`r</code>`n (CR-LF).<br/>
+<p>0.3.2  2013-11-27  Check presence of ROWS delimiters in HTML export template<br/>
+0.3.1  2013-10-10  Fix ProgressStop missing bug, fix numeric column names bug<br/>
+0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by <code>`r</code>`n (CR-LF).<br/>
 Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed,<br/>
 ObjCSV_Collection2HTML, ObjCSV_Collection2XML, ObjCSV_Format4CSV and ObjCSV_ReturnDSVObjectArray<br/>
 0.2.8  2013-10-06  Fix bug in progress start and stop<br/>

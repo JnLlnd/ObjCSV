@@ -9,7 +9,7 @@
 <body>
 
 <h1>ObjCSV_Collection2ListView()</h1>
-<p>Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView. NOTE-1: Due to an AHK limitation, files with more that 200 fields will not be transfered to a ListView. NOTE-2: Although any length of text can be stored in each cell of a ListView, only the first 260 characters are displayed (no lost data).</p>
+<p>Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView. NOTE-1: Due to an AHK limitation, files with more that 200 fields will not be transfered to a ListView. NOTE-2: Although up to 8191 characters of text can be stored in each cell of a ListView, only the first 260 characters are displayed (no lost data under 8192 characters).</p>
 
 <pre class="Syntax">ObjCSV_Collection2ListView(objCollection [, strGuiID = &quot;&quot;, strListViewID = &quot;&quot;, strFieldOrder = &quot;&quot;, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strSortFields = &quot;&quot;, strSortOptions = &quot;&quot;, intProgressType = 0, strProgressText = &quot;&quot;])</pre>
 <h3>Parameters</h4>

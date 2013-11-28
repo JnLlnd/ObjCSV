@@ -16,7 +16,7 @@
 		### ONLINE MATERIAL
 		* [Home of this library is on GitHub](https://github.com/JnLlnd/ObjCSV)
 		* [The most up-to-date version of this AHK file on GitHub](https://raw.github.com/JnLlnd/ObjCSV/master/Lib/ObjCSV.ahk)
-		* [Online ObjCSV Library Help](http://jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/)
+		* [Online ObjCSV Library Help](http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/)
 		* [Topic about this library on AutoHotkey forum](http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/)
 		  
 		### INSTRUCTIONS
@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.3.2  2013-11-27  Check presence of ROWS delimiters in HTML export template  
 			0.3.1  2013-10-10  Fix ProgressStop missing bug, fix numeric column names bug  
 			0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by ``r``n (CR-LF).  
 			Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed,  
@@ -47,7 +48,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.3.1
+	Version: v0.3.2
 */
 
 
@@ -422,37 +423,30 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File exists and should not be overwritten / 2 No HTML template / 3 Invalid encapsulator.
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File exists and should not be overwritten / 2 No HTML template / 3 Invalid encapsulator / 4 No ~ROWS~ start delimiter / 5 No ~/ROWS~ end delimiter
 */
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
-	{
-		if (intProgressType)
-			ProgressStop(intProgressType)
 		ErrorLevel := 1 ; File exists and should not be overwritten
-		return
-	}
 	if !FileExist(strTemplateFile)
-	{
-		if (intProgressType)
-			ProgressStop(intProgressType)
 		ErrorLevel := 2 ; No HTML template
-		return
-	}
 	if StrLen(strTemplateEncapsulator) <> 1
-	{
-		if (intProgressType)
-			ProgressStop(intProgressType)
 		ErrorLevel := 3 ; Invalid encapsulator
+	if (ErrorLevel)
 		return
-	}
 	FileRead, strTemplate, %strTemplateFile%
 	intPos := InStr(strTemplate, strTemplateEncapsulator . "ROWS" . strTemplateEncapsulator)
 		; start of the row template
+	if (intPos = 0)
+		ErrorLevel := 4 ; No ~ROWS~ start delimiter
 	strTemplateHeader :=  SubStr(strTemplate, 1, intPos - 1) ; extract header
 	strTemplate :=  SubStr(strTemplate, intPos + 6) ; remove header template from template string
 	intPos := InStr(strTemplate, strTemplateEncapsulator . "/ROWS" . strTemplateEncapsulator)
 		; end of the row template
+	if (intPos = 0)
+		ErrorLevel := 5 ; No ~/ROWS~ end delimiter
+	if (ErrorLevel)
+		return
 	strTemplateRow :=  SubStr(strTemplate, 1, intPos - 1) ; extract row template
 	strTemplate :=  SubStr(strTemplate, intPos + 7) ; remove row template from template string
 	strTemplateFooter := strTemplate ; remaining of the template string is the footer template
@@ -565,7 +559,7 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 	, intProgressType := 0, strProgressText := "")
 /*!
 	Function: ObjCSV_Collection2ListView(objCollection [, strGuiID = "", strListViewID = "", strFieldOrder = "", strFieldDelimiter = ",", strEncapsulator = """", strSortFields = "", strSortOptions = "", intProgressType = 0, strProgressText = ""])
-		Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView. NOTE-1: Due to an AHK limitation, files with more that 200 fields will not be transfered to a ListView. NOTE-2: Although any length of text can be stored in each cell of a ListView, only the first 260 characters are displayed (no lost data).
+		Transfer the selected fields from a collection of objects to ListView. The collection can be sorted by the function. Field names taken from the objects keys are used as header for the ListView. NOTE-1: Due to an AHK limitation, files with more that 200 fields will not be transfered to a ListView. NOTE-2: Although up to 8191 characters of text can be stored in each cell of a ListView, only the first 260 characters are displayed (no lost data under 8192 characters).
 
 	Parameters:
 		objCollection - Object containing an array of objects (or collection). Objects in the collection are associative arrays which contain a list key-value pairs. See ObjCSV_CSV2Collection returned value for details. NOTE: Multi-line fields can be inserted in a ListView and retreived from a ListView. However, take note that end-of-lines will not be visible in cells with current version of AHK_L (v1.1.09.03).
