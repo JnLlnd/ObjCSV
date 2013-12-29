@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.4.0  2013-12-29  Improved file system error handling (upgrade recommended). Compatibility breaker: review ErrorLevel codes only.  
 			0.3.2  2013-11-27  Check presence of ROWS delimiters in HTML export template  
 			0.3.1  2013-10-10  Fix ProgressStop missing bug, fix numeric column names bug  
 			0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by ``r``n (CR-LF).  
@@ -48,7 +49,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.3.2
+	Version: v0.4.0
 */
 
 
@@ -63,7 +64,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 
 	Parameters:
 		strFilePath - Path of the file to load, which is assumed to be in A_WorkingDir if an absolute path isn't specified.
-		strFieldNames - (ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, "C" + column numbers are used as object keys, starting at 1. Empty by default. Output: See "Returns:" above.
+		strFieldNames - (ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, "C" + column numbers are used as object keys, starting at 1. Empty by default. Output: See "Returns:" below.
 		blnHeader - (Optional) If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True (or 1) by default.
 		blnMultiline - (Optional) If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE-1: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details). NOTE-2: If blnMultiline is True, you can use the strEolReplacement parameter to specify a character (or string) that will be converted to line-breaks if found in the CSV file.
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
@@ -110,7 +111,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 	if (intProgressType)
 	{
 		intMaxProgress := StrLen(strData)
-		intProgressBatchSize := Round(intMaxProgress / 100)
+		intProgressBatchSize := ProgressBatchSize(intMaxProgress)
 		intProgressIndex := 0
 		intProgressThisBatch := 0
 		if blnMultiline
@@ -125,7 +126,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		if (intProgressType AND (intProgressThisBatch > intProgressBatchSize))
 		{
 			ProgressUpdate(intProgressType, intProgressIndex, intMaxProgress, strProgressText)
-				; update progress bar only every %intProgressBatchSize% chars
+				; update progress bar only every %intProgressBatchSize% records
 			intProgressThisBatch := 0
 		}
 		if (A_Index = 1) and (blnHeader) ; we have an header to read
@@ -214,14 +215,14 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
-		None.
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
 */
 {
 	strData := ""
 	intMax := objCollection.MaxIndex()
 	if (intProgressType)
 	{
-		intProgressBatchSize := Round(intMax / 100)
+		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
 	if (blnHeader) ; put the field names (header) in the first line of the CSV file
@@ -245,11 +246,12 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 	Loop, %intMax% ; for each record in the collection
 	{
 		strRecord := "" ; line to add to the CSV file
-		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
+		if !Mod(A_Index, intProgressBatchSize) ; update progress bar and save every %intProgressBatchSize% records
 		{
-			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
-				; update progress bar only every %intProgressBatchSize% chars
-			FileAppend, %strData%, %strFilePath%
+			if (intProgressType)
+				ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+			If !SaveBatch(strData, strFilePath, intProgressType)
+				return
 			strData := ""
 		}
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
@@ -274,7 +276,8 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		StringTrimRight, strRecord, strRecord, 1 ; remove extra field delimiter
 		strData := strData . strRecord . "`r`n"
 	}
-	FileAppend, %strData%, %strFilePath%
+	If !SaveBatch(strData, strFilePath, intProgressType)
+		return
 	if (intProgressType)
 		ProgressStop(intProgressType)
 	return
@@ -305,7 +308,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
-		None.
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
 */
 {
 	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter%
@@ -314,7 +317,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 	intMax := objCollection.MaxIndex()
 	if (intProgressType)
 	{
-		intProgressBatchSize := Round(intMax / 100)
+		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
 	if (blnHeader) ; put the field names (header) in the first line of the file
@@ -346,11 +349,12 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 	Loop, %intMax% ; for each record in the collection
 	{
 		strRecord := "" ; line to add to the file
-		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
+		if !Mod(A_Index, intProgressBatchSize) ; update progress bar and save every %intProgressBatchSize% records
 		{
-			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
-				; update progress bar only every %intProgressBatchSize% chars
-			FileAppend, %strData%, %strFilePath%
+			if (intProgressType)
+				ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+			If !SaveBatch(strData, strFilePath, intProgressType)
+				return
 			strData := ""
 		}
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
@@ -380,7 +384,8 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		}
 		strData := strData . strRecord . "`r`n" ; add record to the file
 	}
-	FileAppend, %strData%, %strFilePath%
+	If !SaveBatch(strData, strFilePath, intProgressType)
+		return
 	if (intProgressType)
 		ProgressStop(intProgressType)
 	return
@@ -423,11 +428,11 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File exists and should not be overwritten / 2 No HTML template / 3 Invalid encapsulator / 4 No ~ROWS~ start delimiter / 5 No ~/ROWS~ end delimiter
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 No HTML template / 3 Invalid encapsulator / 4 No ~ROWS~ start delimiter / 5 No ~/ROWS~ end delimiter / 6 File exists and should not be overwritten. For system errors, check A_LastError and google "windows system error codes".
 */
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
-		ErrorLevel := 1 ; File exists and should not be overwritten
+		ErrorLevel := 6 ; File exists and should not be overwritten
 	if !FileExist(strTemplateFile)
 		ErrorLevel := 2 ; No HTML template
 	if StrLen(strTemplateEncapsulator) <> 1
@@ -455,18 +460,19 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 	intMax := objCollection.MaxIndex()
 	if (intProgressType)
 	{
-		intProgressBatchSize := Round(intMax / 100)
+		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
 	if (blnOverwrite)
 		FileDelete, %strFilePath% ; delete existing file if present, no error if missing
 	Loop, %intMax% ; for each record in the collection
 	{
-		if (intProgressType) and !Mod(A_Index, intProgressBatchSize)
+		if !Mod(A_Index, intProgressBatchSize) ; update progress bar and save every %intProgressBatchSize% records
 		{
-			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
-				; update progress bar only every %intProgressBatchSize% chars
-			FileAppend, %strData%, %strFilePath%
+			if (intProgressType)
+				ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+			If !SaveBatch(strData, strFilePath, intProgressType)
+				return
 			strData := ""
 		}
 		strData := strData . MakeHTMLRow(strTemplateRow, objCollection[A_Index], A_Index, strTemplateEncapsulator) 
@@ -474,14 +480,14 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 	}
 	strData := strData . MakeHTMLHeaderFooter(strTemplateFooter, strFilePath, strTemplateEncapsulator)
 		; replace variables in the footer template and append to the HTML data string
-	FileAppend, %strData%, %strFilePath%
+	If !SaveBatch(strData, strFilePath, intProgressType)
+		return
 	if (intProgressType)
 		ProgressStop(intProgressType)
 	ErrorLevel := 0
 	return
 }
 ;================================================
-
 
 
 
@@ -510,14 +516,14 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 
 	Returns:
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File exists and should not be overwritten
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 File exists and should not be overwritten. For system errors, check A_LastError and google "windows system error codes".
 */
 {
 	if (FileExist(strFilePath) and !blnOverwrite)
 	{
 		if (intProgressType)
 			ProgressStop(intProgressType)
-		ErrorLevel := 1 ; File exists and should not be overwritten
+		ErrorLevel := 2 ; File exists and should not be overwritten
 		return
 	}
 	strData := "<?xml version='1.0'?>`r`n<XMLExport>`r`n"
@@ -525,25 +531,27 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 	intMax := objCollection.MaxIndex()
 	if (intProgressType)
 	{
-		intProgressBatchSize := Round(intMax / 100)
+		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
 	if (blnOverwrite)
 		FileDelete, %strFilePath% ; delete existing file if present, no error if missing
 	Loop, %intMax% ; for each record in the collection
 	{
-		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
+		if !Mod(A_Index, intProgressBatchSize) ; update progress bar and save every %intProgressBatchSize% records
 		{
-			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
-				; update progress bar only every %intProgressBatchSize% chars
-			FileAppend, %strData%, %strFilePath%
+			if (intProgressType)
+				ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+			If !SaveBatch(strData, strFilePath, intProgressType)
+				return
 			strData := ""
 		}
 		strData := strData . MakeXMLRow(objCollection[A_Index])
 			; append XML for this row to the XML data string
 	}
 	strData := strData . "</XMLExport>`r`n" ; append XML footer to the XML data string
-	FileAppend, %strData%, %strFilePath%
+	If !SaveBatch(strData, strFilePath, intProgressType)
+		return
 	if (intProgressType)
 		ProgressStop(intProgressType)
 	ErrorLevel := 0
@@ -587,7 +595,7 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 	intMax := objCollection.MaxIndex()
 	if (intProgressType)
 	{
-		intProgressBatchSize := Round(intMax / 100)
+		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
 	if StrLen(strGuiID)
@@ -622,7 +630,7 @@ ObjCSV_Collection2ListView(objCollection, strGuiID := "", strListViewID := "", s
 	{
 		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
 			ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
-				; update progress bar only every %intProgressBatchSize% chars
+				; update progress bar only every %intProgressBatchSize% records
 		intRowNumber := A_Index
 		arrFields := Array() ; will contain the values for each cell of a new row
 		for intIndex, strFieldName in objHeader
@@ -679,12 +687,12 @@ ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder :=
 	{
 		if (blnSelected)
 		{
-			intProgressBatchSize := Round(intNbRowsSelected / 100)
+			intProgressBatchSize := ProgressBatchSize(intNbRowsSelected)
 			intNbRowsProgress:= intNbRowsSelected
 		}
 		else
 		{
-			intProgressBatchSize := Round(intNbRows / 100)
+			intProgressBatchSize := ProgressBatchSize(intNbRows)
 			intNbRowsProgress:= intNbRows
 		}
 		ProgressStart(intProgressType, intNbRowsProgress, strProgressText)
@@ -712,7 +720,7 @@ ObjCSV_ListView2Collection(strGuiID := "", strListViewID := "", strFieldOrder :=
 	{
 		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
 			ProgressUpdate(intProgressType, A_index, intNbRowsProgress, strProgressText)
-				; update progress bar only every %intProgressBatchSize% chars
+				; update progress bar only every %intProgressBatchSize% records
 		if (blnSelected)
 			intRowNumber := LV_GetNext(intRowNumber) ; get next selected row number
 		else
@@ -764,7 +772,7 @@ ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", intPro
 	intTotalRecords := objCollection.MaxIndex()
 	if (intProgressType)
 	{
-		intProgressBatchSize := Round(intTotalRecords / 100)
+		intProgressBatchSize := ProgressBatchSize(intTotalRecords)
 		ProgressStart(intProgressType, intTotalRecords, strProgressText)
 	}
 	strIndex := ""
@@ -791,7 +799,7 @@ ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", intPro
 		intRecordNumber := A_Index
 		if (intProgressType) and !Mod(A_index, intProgressBatchSize)
 			ProgressUpdate(intProgressType, A_index, intTotalRecords, strProgressText)
-				; update progress bar only every %intProgressBatchSize% chars
+				; update progress bar only every %intProgressBatchSize% records
 		if InStr(strSortFields, "+")
 		{
 			strSortingValue := ""
@@ -949,7 +957,7 @@ Prepare4Multilines(ByRef strCsvData, strFieldEncapsulator := """", intProgressTy
 		Replace end-of-line characters (`n) in field data in strCsvData with a replacement character in order to make data rows stand on a single-line before they are processed by the "Loop, Parse" command. A safe replacement character (absent from the strCsvData string) is automatically determined by the function.
 
 	Parameters:
-		strCsvData - (ByRef) Input: Data string to process. Output: See "Returns:" above. 
+		strCsvData - (ByRef) Input: Data string to process. Output: See "Returns:" below. 
 		strFieldEncapsulator - (Optional) Character used in the strCsvData data to embed fields that include line-breaks. Double-quote by default.
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
@@ -957,7 +965,7 @@ Prepare4Multilines(ByRef strCsvData, strFieldEncapsulator := """", intProgressTy
 	Returns:
 		The function returns the replacement character for end-of-lines. Usualy ¡ (inverted exclamation mark, ASCII 161) or the next available safe character: ¢ (ASCII 162), £ (ASCII 163), ¤ (ASCII 164), etc.  The caller of this function *must* save this value in a variable and *must* do the reverse replacement with `n at the appropriate step inside a "Loop, Parse" command.  
 		  
-		The ByRef parameter returns the data string with all end-of-line characters (`n) replaced with the safe replacement character.
+		The ByRef parameter strCsvData returns the data string with all end-of-line characters (`n) replaced with the safe replacement character.
 
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 2 Memory limit / 3 No unused character for replacement (returned by sub-function GetFirstUnusedAsciiCode) / 255 Unknown error. If the function produces an "Memory limit reached" error, increase the #MaxMem value (see the help file).
 */
@@ -973,7 +981,9 @@ CALL-FOR-HELP!
 	if (intProgressType)
 	{
 		intMaxProgress := StrLen(strCsvData)
-		intProgressBatchSize := Round(intMaxProgress / 100)
+		intProgressBatchSize := ProgressBatchSize(intMaxProgress)
+		if (intProgressBatchSize < 8192)
+			intProgressBatchSize := 8192
 		ProgressStart(intProgressType, intMaxProgress, strProgressText)
 	}
 	intEolReplacementAsciiCode := GetFirstUnusedAsciiCode(strCsvData) ; Usualy ¡ (inverted exclamation mark, ASCII 161)
@@ -1042,6 +1052,24 @@ to optimize memory usage by this function.
 
 
 
+SaveBatch(strData, strFilePath, intProgressType)
+{
+	loop
+	{
+		FileAppend, %strData%, %strFilePath%
+		if ErrorLevel
+			Sleep, 20
+	}
+	until !ErrorLevel or (A_Index > 50) ; after 1 second (20ms x 50), we have a problem
+
+	If (ErrorLevel) and (intProgressType)
+		ProgressStop(intProgressType)
+
+	return !ErrorLevel
+}
+
+
+
 MakeFixedWidth(strFixed, intWidth)
 {
 	while StrLen(strFixed) < intWidth
@@ -1081,6 +1109,16 @@ MakeXMLRow(objRow)
 		strOutput := strOutput . A_Tab . A_Tab . "<" . strFieldName .  ">" . strValue . "</" . strFieldName .  ">`r`n"
 	strOutput := strOutput . A_Tab . "</Record>`r`n"
 	return %strOutput%
+}
+
+
+
+ProgressBatchSize(intMax)
+{
+	intSize := Round(intMax / 100)
+	if (intSize < 100)
+		intSize := 100
+	return intSize
 }
 
 

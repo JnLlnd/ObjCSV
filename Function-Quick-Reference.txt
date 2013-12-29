@@ -1,6 +1,6 @@
 Library Quick Reference: ObjCSV Library
 	Author: By Jean Lalonde
-	Version: v0.3.0
+	Version: v0.4.0
 
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText := ""])
 ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = ""])
