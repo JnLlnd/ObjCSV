@@ -39,7 +39,10 @@ Copy this script in a file named ObjCSV.ahk and save this file in one of these \
 You can use the functions in this library by calling ObjCSV_FunctionName. No #Include required!
 
 
-DISCUSSION AND TUTORIAL
+DOCUMENTATION, DISCUSSION AND TUTORIAL
+
+Library documentation:  
+http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/
 
 A discussion on this library and tutorials can be found on the AutoHotkey forum:  
 http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/  
