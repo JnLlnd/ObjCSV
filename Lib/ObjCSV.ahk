@@ -28,6 +28,8 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.4.1  2014-03-05  Import files with equal sign before opening field encasulator to indicate text data or formula not to be
+			interpreted as numeric when imported by XL (eg. ...;="12345";...). This is an XL-only CSV feature, not a standard CSV feature.
 			0.4.0  2013-12-29  Improved file system error handling (upgrade recommended). Compatibility breaker: review ErrorLevel codes only.  
 			0.3.2  2013-11-27  Check presence of ROWS delimiters in HTML export template  
 			0.3.1  2013-10-10  Fix ProgressStop missing bug, fix numeric column names bug  
@@ -120,9 +122,10 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 	}
 	Loop, Parse, strData, `n, `r ; read each line (record) of the CSV file
 	{
-		intProgressIndex := intProgressIndex + StrLen(A_LoopField) + 2
-		intProgressThisBatch := intProgressThisBatch + StrLen(A_LoopField) + 2
-			; augment intProgressIndex of len of line + 2 for cr-lf 
+		StringReplace, strThisLine, A_LoopField, % "=" . strEncapsulator, %strEncapsulator%, All
+		intProgressIndex := intProgressIndex + StrLen(strThisLine) + 2
+		intProgressThisBatch := intProgressThisBatch + StrLen(strThisLine) + 2
+			; augment intProgressIndex of len of line + 2 for cr-lf
 		if (intProgressType AND (intProgressThisBatch > intProgressBatchSize))
 		{
 			ProgressUpdate(intProgressType, intProgressIndex, intMaxProgress, strProgressText)
@@ -131,7 +134,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		}
 		if (A_Index = 1) and (blnHeader) ; we have an header to read
 		{
-			objHeader := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
+			objHeader := ObjCSV_ReturnDSVObjectArray(strThisLine, strFieldDelimiter, strEncapsulator)
 				; returns an object array from the first line of the delimited-separated-value file
 			strFieldNamesMatchList := strFieldDelimiter
 			Loop, % objHeader.MaxIndex() ; check if fields names are empty or duplicated
@@ -165,7 +168,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 				objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
 					; returns an object array from the delimited-separated-value strFieldNames string
 			objData := Object() ; object of one record in the collection
-			for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
+			for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(strThisLine, strFieldDelimiter, strEncapsulator)
 				; returns an object array from each line of the delimited-separated-value file
 			{
 				if blnMultiline
