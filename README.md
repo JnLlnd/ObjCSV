@@ -43,7 +43,7 @@ You can use the functions in this library by calling ObjCSV_FunctionName. No #In
 DOCUMENTATION, DISCUSSION AND TUTORIAL
 
 Library documentation:  
-http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/
+http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/ (up to v0.4)
 
 A discussion on this library and tutorials can be found on the AutoHotkey forum:  
 http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/  
