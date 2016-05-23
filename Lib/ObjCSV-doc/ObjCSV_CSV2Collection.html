@@ -13,7 +13,7 @@
 the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by
 the ByRef variable strFieldNames. Delimiters are configurable.</p>
 
-<pre class="Syntax">ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strEolReplacement = &quot;&quot;, strProgressText := &quot;&quot;])</pre>
+<pre class="Syntax">ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strEolReplacement = &quot;&quot;, strProgressText := &quot;&quot;, ByRef strFileEncoding := &quot;&quot;])</pre>
 <h3>Parameters</h4>
 <table class="info">
 <tr>
@@ -52,10 +52,15 @@ the ByRef variable strFieldNames. Delimiters are configurable.</p>
   <td width="15%">strProgressText</td>
   <td width="85%">(Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string &quot;##&quot; is replaced with the percentage of progress. See also intProgressType above. Empty by default.</td>
 </tr>
+<tr>
+  <td width="15%">strFileEncoding</td>
+  <td width="85%">(ByRef, Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (nnnn being a code page numeric identifier - see <a href="https://autohotkey.com/docs/commands/FileEncoding.htm">https://autohotkey.com/docs/commands/FileEncoding.htm</a>. Empty by default (using current encoding). If a literal value or a filled variable is passed as parameter, this value is used to set reading encoding. If an empty variable is passed to the ByRef parameter, the detected file encoding is returned in the ByRef variable.</td>
+</tr>
 </table>
 <h3>Returns</h3>
 <p>This functions returns an object that contains an array of objects. This collection of objects can be viewed as a table in a database. Each object in the collection is like a record (or a line) in a table. These records are, in fact, associative arrays which contain a list key-value pairs. Key names are like field names (or column names) in the table. Key names are taken in the header of the CSV file, if it exists. Keys can be strings or integers, while values can be of any type that can be expressed as text. The records can be read using the syntax obj[1], obj[2] (...). Field values can be read using the syntax obj[1].keyname or, when field names contain spaces, obj[1][&quot;key name&quot;]. The &quot;Loop, Parse&quot; and &quot;For key, value in array&quot; commands allow to easily browse the content of these objects.</p>
 <p>If blnHeader is true (or 1), the ByRef parameter strFieldNames returns a string containing the field names (object keys) read from the first line of the CSV file, in the format and in the order they appear in the file. If a field name is empty, it is replaced with &quot;Empty_&quot; and its field number.  If a field name is duplicated, the field number is added to the duplicate name.  If blnHeader is false (or 0), the value of strFieldNames is unchanged by the function.</p>
+<p>If an empty variable is passed to the ByRef parameter strFileEncoding, returns the detected file encoding.</p>
 
 </body>
 </html>

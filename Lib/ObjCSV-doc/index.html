@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<h1>ObjCSV Library - Version v0.4.0 - by By Jean Lalonde</h1>
+<h1>ObjCSV Library - Version v0.5.0 - by By Jean Lalonde</h1>
 <p>AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
 Object data type.<br/></p>
 <ul>
@@ -36,11 +36,16 @@ AutoHotkey_L v1.1.09.03+ (<a href="http://l.autohotkey.net/">http://l.autohotkey
 </ul>
 <p>You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)</p>
 <h3 id="versions-history">VERSIONS HISTORY</h3>
-<p>0.4.0  2013-12-29  Improved file system error handling (upgrade recommended). Compatibility breaker: review ErrorLevel codes only.<br/>
+<p>0.5.0  2016-05-23  Addition of file encoding optional parameter to ObjCSV_CSV2Collection, ObjCSV_Collection2CSV,
+ObjCSV_Collection2Fixed, ObjCSV_Collection2HTML and ObjCSV_Collection2XML. In ObjCSV_CSV2Collection if the ByRef parameter is
+empty, it is returned with the detected file encoding.<br/>
+0.4.1  2014-03-05  Import files with equal sign before opening field encasulator to indicate text data or formula not to be
+interpreted as numeric when imported by XL (eg. ...;=&quot;12345&quot;;...). This is an XL-only CSV feature, not a standard CSV feature.<br/>
+0.4.0  2013-12-29  Improved file system error handling (upgrade recommended). Compatibility breaker: review ErrorLevel codes only.<br/>
 0.3.2  2013-11-27  Check presence of ROWS delimiters in HTML export template<br/>
 0.3.1  2013-10-10  Fix ProgressStop missing bug, fix numeric column names bug<br/>
-0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by <code>`r</code>`n (CR-LF).<br/>
-Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed,<br/>
+0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by <code>`r</code>`n (CR-LF). 
+Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed, 
 ObjCSV_Collection2HTML, ObjCSV_Collection2XML, ObjCSV_Format4CSV and ObjCSV_ReturnDSVObjectArray<br/>
 0.2.8  2013-10-06  Fix bug in progress start and stop<br/>
 0.2.7  2013-10-06  Memory management optimization and introduction of ErrorLevel results<br/>

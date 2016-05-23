@@ -11,7 +11,7 @@
 <h1>ObjCSV_Collection2Fixed()</h1>
 <p>Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.</p>
 
-<pre class="Syntax">ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = &quot;&quot;, intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strEolReplacement = &quot;&quot;, strProgressText = &quot;&quot;])</pre>
+<pre class="Syntax">ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = &quot;&quot;, intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strEolReplacement = &quot;&quot;, strProgressText = &quot;&quot;, strFileEncoding := &quot;&quot;])</pre>
 <h3>Parameters</h4>
 <table class="info">
 <tr>
@@ -57,6 +57,10 @@
 <tr>
   <td width="15%">strProgressText</td>
   <td width="85%">(Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string &quot;##&quot; is replaced with the percentage of progress. See also intProgressType above. Empty by default.</td>
+</tr>
+<tr>
+  <td width="15%">strFileEncoding</td>
+  <td width="85%">(Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see <a href="https://autohotkey.com/docs/commands/FileEncoding.htm">https://autohotkey.com/docs/commands/FileEncoding.htm</a>). Empty by default.</td>
 </tr>
 </table>
 <h3>Returns</h3>

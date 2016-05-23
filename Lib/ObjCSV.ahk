@@ -30,14 +30,14 @@
 		### VERSIONS HISTORY
 			0.5.0  2016-05-23  Addition of file encoding optional parameter to ObjCSV_CSV2Collection, ObjCSV_Collection2CSV,
 			ObjCSV_Collection2Fixed, ObjCSV_Collection2HTML and ObjCSV_Collection2XML. In ObjCSV_CSV2Collection if the ByRef parameter is
-			empty, it is returned with the detected file encoding.
+			empty, it is returned with the detected file encoding.  
 			0.4.1  2014-03-05  Import files with equal sign before opening field encasulator to indicate text data or formula not to be
-			interpreted as numeric when imported by XL (eg. ...;="12345";...). This is an XL-only CSV feature, not a standard CSV feature.
+			interpreted as numeric when imported by XL (eg. ...;="12345";...). This is an XL-only CSV feature, not a standard CSV feature.  
 			0.4.0  2013-12-29  Improved file system error handling (upgrade recommended). Compatibility breaker: review ErrorLevel codes only.  
 			0.3.2  2013-11-27  Check presence of ROWS delimiters in HTML export template  
 			0.3.1  2013-10-10  Fix ProgressStop missing bug, fix numeric column names bug  
-			0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by ``r``n (CR-LF).  
-			Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed,  
+			0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by ``r``n (CR-LF). 
+			Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed, 
 			ObjCSV_Collection2HTML, ObjCSV_Collection2XML, ObjCSV_Format4CSV and ObjCSV_ReturnDSVObjectArray  
 			0.2.8  2013-10-06  Fix bug in progress start and stop  
 			0.2.7  2013-10-06  Memory management optimization and introduction of ErrorLevel results  
@@ -62,7 +62,7 @@
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, intProgressType := 0
 	, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := "", strProgressText := "", ByRef strFileEncoding := "")
 /*!
-	Function: ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText := ""])
+	Function: ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText := "", ByRef strFileEncoding := ""])
 		Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of
 		the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by
 		the ByRef variable strFieldNames. Delimiters are configurable.
@@ -77,7 +77,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". All fields and headers in the CSV file can be encapsulated, if desired by the file creator. Double-quote by default.
 		strEolReplacement - (Optional) Character (or string) that will be converted to line-breaks if found in the CSV file. Replacements occur only when blnMultiline is True. Empty by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
-		strFileEncoding - (ByRef, Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (nnnn being a code page numeric identifier - see https://autohotkey.com/docs/commands/FileEncoding.htm). Empty by default (using current encoding). If a literal value or a filled variable is passed as parameter, this value is used to set reading encoding. If an empty variable is passed to the ByRef parameter, the detected file encoding is returned in the ByRef variable.
+		strFileEncoding - (ByRef, Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (nnnn being a code page numeric identifier - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm). Empty by default (using current encoding). If a literal value or a filled variable is passed as parameter, this value is used to set reading encoding. If an empty variable is passed to the ByRef parameter, the detected file encoding is returned in the ByRef variable.
 
 	Returns:
 		This functions returns an object that contains an array of objects. This collection of objects can be viewed as a table in a database. Each object in the collection is like a record (or a line) in a table. These records are, in fact, associative arrays which contain a list key-value pairs. Key names are like field names (or column names) in the table. Key names are taken in the header of the CSV file, if it exists. Keys can be strings or integers, while values can be of any type that can be expressed as text. The records can be read using the syntax obj[1], obj[2] (...). Field values can be read using the syntax obj[1].keyname or, when field names contain spaces, obj[1]["key name"]. The "Loop, Parse" and "For key, value in array" commands allow to easily browse the content of these objects.
@@ -219,7 +219,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
 	, strProgressText := "", strFileEncoding := "")
 /*!
-	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = ""])
+	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := ""])
 		Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.
 
 	Parameters:
@@ -233,7 +233,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		strEncapsulator - (Optional) One character (usualy double-quote) inserted in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
 		strEolReplacement - (Optional) When empty, multi-line fields are saved unchanged. If not empty, end-of-line in multi-line fields are replaced by the character or string strEolReplacement. Empty by default. NOTE: Strings including replaced end-of-line will still be encapsulated with the strEncapsulator character.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
-		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see https://autohotkey.com/docs/commands/FileEncoding.htm). Empty by default.
+		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default.
 
 	Returns:
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
@@ -312,7 +312,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
 	, strProgressText := "", strFileEncoding := "")
 /*!
-	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = ""])
+	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := ""])
 		Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
 
 	Parameters:
@@ -327,8 +327,8 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		strEncapsulator - (Optional) One character (usualy double-quote) inserted in the strFieldOrder parameter to embed field names that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character is doubled in the string. For example: "one ""quoted"" word". Double-quote by default. This delimiter is NOT used in the file data.
 		strEolReplacement - (Optional) A fixed-width file should not include end-of-line within data. If it does and if a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
-		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see https://autohotkey.com/docs/commands/FileEncoding.htm). Empty by default.
-		
+		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default.
+
 	Returns:
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
 */
@@ -420,7 +420,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateEncapsulator := "~", intProgressType := 0
 	, blnOverwrite := 0, strProgressText := "", strFileEncoding := "")
 /*!
-	Function: ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, intProgressType = 0, blnOverwrite = 0, strProgressText = ""])
+	Function: ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, intProgressType = 0, blnOverwrite = 0, strProgressText = "", strFileEncoding := ""])
 		Builds an HTML file based on a template file where variable names are replaced with the content in each record of the collection.
 
 	Parameters:
@@ -448,8 +448,8 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
 		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
-		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see https://autohotkey.com/docs/commands/FileEncoding.htm). Empty by default.
-		
+		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default.
+
 	Returns:
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 No HTML template / 3 Invalid encapsulator / 4 No ~ROWS~ start delimiter / 5 No ~/ROWS~ end delimiter / 6 File exists and should not be overwritten. For system errors, check A_LastError and google "windows system error codes".
 */
@@ -520,7 +520,7 @@ ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile, strTemplateE
 ;================================================
 ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverwrite := 0, strProgressText := "", strFileEncoding := "")
 /*!
-	Function: ObjCSV_Collection2XML(objCollection, strFilePath [, intProgressType = 0, blnOverwrite = 0, strProgressText = ""])
+	Function: ObjCSV_Collection2XML(objCollection, strFilePath [, intProgressType = 0, blnOverwrite = 0, strProgressText = "", strFileEncoding := ""])
 		Builds an XML file from the content of the collection. The calling script must ensure that field names and field data comply with the rules of XML syntax. This simple example, where each record has two fields named "Field1" and "Field2", shows the XML output format:
 			> <?xml version='1.0'?>
 			> <XMLExport>
@@ -540,8 +540,8 @@ ObjCSV_Collection2XML(objCollection, strFilePath, intProgressType := 0, blnOverw
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
 		blnOverwrite - (Optional) If true (or 1), overwrite existing files. If false (or 0) and the output file exists, the function ends without writing the output file. False (or 0) by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
-		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see https://autohotkey.com/docs/commands/FileEncoding.htm). Empty by default.
-		
+		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default.
+
 	Returns:
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 File exists and should not be overwritten. For system errors, check A_LastError and google "windows system error codes".
 */
