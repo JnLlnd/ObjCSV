@@ -4,13 +4,14 @@
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 Library home on GitHub [https://github.com/JnLlnd/ObjCSV](https://github.com/JnLlnd/ObjCSV)
-2013-08-22+
+2013-08-22+, last update (v0.5.0): 2016-05-23
 
 AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type
 * Read and save files in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.).
 * Display, edit and read Collections in GUI ListView objects.
 * Export Collection to fixed-width, HTML or XML files.
-  
+* Read and save files supporting the following file encoding: ANSI (default), UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (nnnn being a code page numeric identifier), new in v0.5
+
 For more info on CSV files, see [http://en.wikipedia.org/wiki/Comma-separated_values](http://en.wikipedia.org/wiki/Comma-separated_values).  
 
 Even if you don't know much about AHK objects, simply using these functions will help to:
