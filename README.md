@@ -4,7 +4,7 @@
 Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
 By JnLlnd on AHK forum
 Library home on GitHub [https://github.com/JnLlnd/ObjCSV](https://github.com/JnLlnd/ObjCSV)
-2013-08-22+, last update (v0.5.0): 2016-05-23
+2013-08-22+, last update (v0.5.1): 2016-06-06
 
 AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type
 * Read and save files in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.).
