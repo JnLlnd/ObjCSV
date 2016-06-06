@@ -28,6 +28,8 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.5.1  2016-06-06  In ObjCSV_CSV2Collection if the ByRef parameter is empty, the file encoding is returned only for UTF-8 or
+			UTF-16 encoded files (no BOM) because other types (ANSI or UTF-n-RAW) files cannot be differentiated by the AHK engine.  
 			0.5.0  2016-05-23  Addition of file encoding optional parameter to ObjCSV_CSV2Collection, ObjCSV_Collection2CSV,
 			ObjCSV_Collection2Fixed, ObjCSV_Collection2HTML and ObjCSV_Collection2XML. In ObjCSV_CSV2Collection if the ByRef parameter is
 			empty, it is returned with the detected file encoding.  
@@ -54,7 +56,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.5.0
+	Version: v0.5.1
 */
 
 
@@ -94,7 +96,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 	if !StrLen(strFileEncoding) and IsByRef(strFileEncoding) ; an empty variable was passed to strFileEncoding, detect the encoding
 	{
 		objFile := FileOpen(strFilePath, "r") ; open the file read-only
-		strFileEncoding := objFile.Encoding
+		strFileEncoding := (InStr(objFile.Encoding, "UTF-") ? objFile.Encoding : "")
 		objFile.Close()
 		objFile := ""
 	}
