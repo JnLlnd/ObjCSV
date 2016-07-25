@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.5.2  2016-07-24  Add an option to ObjCSV_Collection2CSV and blnAlwaysEncapsulate functions to force encapsulation of all values.  
 			0.5.1  2016-06-06  In ObjCSV_CSV2Collection if the ByRef parameter is empty, the file encoding is returned only for UTF-8 or
 			UTF-16 encoded files (no BOM) because other types (ANSI or UTF-n-RAW) files cannot be differentiated by the AHK engine.  
 			0.5.0  2016-05-23  Addition of file encoding optional parameter to ObjCSV_CSV2Collection, ObjCSV_Collection2CSV,
@@ -56,7 +57,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.5.1
+	Version: v0.5.2 (2016-07-24)
 */
 
 
@@ -219,9 +220,9 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 ;================================================
 ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", intProgressType := 0
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
-	, strProgressText := "", strFileEncoding := "")
+	, strProgressText := "", strFileEncoding := "", blnAlwaysEncapsulate := 0)
 /*!
-	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := ""])
+	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate] := 0)
 		Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.
 
 	Parameters:
@@ -236,6 +237,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		strEolReplacement - (Optional) When empty, multi-line fields are saved unchanged. If not empty, end-of-line in multi-line fields are replaced by the character or string strEolReplacement. Empty by default. NOTE: Strings including replaced end-of-line will still be encapsulated with the strEncapsulator character.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default (system default ANSI code page).
+		blnAlwaysEncapsulate - (Optional) If true (or 1), always encapsulate values with field encapsulator. If false (or 0), fields are encapsulated only if required (see strEncapsulator above). False (or 0) by default.
 
 	Returns:
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
@@ -255,7 +257,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 			; in their natural order 
 		{
 			for strFieldName, strValue in objCollection[1]
-				strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator) 
+				strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) 
 					. strFieldDelimiter
 			StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
 		}
@@ -867,7 +869,7 @@ ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", intPro
 
 
 ;================================================
-ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """")
+ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """", blnAlwaysEncapsulate := 0)
 /*!
 	Function: ObjCSV_Format4CSV(strF4C [, strFieldDelimiter = ",", strEncapsulator = """"])
 		Add encapsulator before and after strF4C if the string includes line breaks, field delimiter or field encapsulator. Encapsulated field encapsulators are doubled.
@@ -876,6 +878,7 @@ ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """")
 		strF4C - String to convert to CSV format
 		strFieldDelimiter - (Optional) Field delimiter. One character, usually comma (default value) or tab.
 		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
+		blnAlwaysEncapsulate - (Optional) If true (or 1), always encapsulate values with field encapsulator. If false (or 0), fields are encapsulated only if required (see strEncapsulator above). False (or 0) by default.
 
 	Returns:
 		String with required encapsulator.
@@ -887,22 +890,30 @@ ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """")
 		Added the strEncapsulator parameter to make it work with other encapsultors than double-quotes.
 */
 {
-   Reformat:=False ; Assume String is OK
-   IfInString, strF4C,`n ; Check for linefeeds
-      Reformat:=True ; String must be bracketed by double-quotes
-   IfInString, strF4C,`r ; Check for linefeeds
-      Reformat:=True
-   IfInString, strF4C,%strFieldDelimiter% ; Check for field delimiter
-      Reformat:=True
+	Reformat := False ; Assume String is OK
+	IfInString, strF4C, `n ; Check for linefeeds
+		Reformat := True ; String must be bracketed by double-quotes
+	IfInString, strF4C, `r ; Check for linefeeds
+		Reformat := True
+	IfInString, strF4C, %strFieldDelimiter% ; Check for field delimiter
+		Reformat := True
+	if InStr(strF4C, strEncapsulator) or (blnAlwaysEncapsulate)
+	{
+		Reformat := True
+		StringReplace, strF4C, strF4C, %strEncapsulator%, %strEncapsulator%%strEncapsulator%, All
+		; The original encapsulator need to be double encapsulator
+	}
+   /*
    IfInString, strF4C, %strEncapsulator% ; Check for encapsulator
    {
       Reformat:=True
       StringReplace, strF4C, strF4C, %strEncapsulator%, %strEncapsulator%%strEncapsulator%, All
 		; The original encapsulator need to be double encapsulator
    }
-   If (Reformat)
-      strF4C= %strEncapsulator%%strF4C%%strEncapsulator% ; If needed, bracket the string in encapsulators
-   Return, strF4C
+   */
+	If (Reformat)
+		strF4C = %strEncapsulator%%strF4C%%strEncapsulator% ; If needed, bracket the string in encapsulators
+	Return, strF4C
 }
 ;================================================
 
