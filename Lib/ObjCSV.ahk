@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.5.3  2016-08-21  Fix bug with blnAlwaysEncapsulate in ObjCSV_Collection2CSV.  
 			0.5.2  2016-07-24  Add an option to ObjCSV_Collection2CSV and blnAlwaysEncapsulate functions to force encapsulation of all values.  
 			0.5.1  2016-06-06  In ObjCSV_CSV2Collection if the ByRef parameter is empty, the file encoding is returned only for UTF-8 or
 			UTF-16 encoded files (no BOM) because other types (ANSI or UTF-n-RAW) files cannot be differentiated by the AHK engine.  
@@ -57,7 +58,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.5.2 (2016-07-24)
+	Version: v0.5.3 (2016-08-21)
 */
 
 
@@ -257,7 +258,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 			; in their natural order 
 		{
 			for strFieldName, strValue in objCollection[1]
-				strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) 
+				strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate)
 					. strFieldDelimiter
 			StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
 		}
@@ -287,16 +288,16 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 				strValue := objCollection[intLineNumber][Trim(strFieldName)]
 				if (StrLen(strEolReplacement)) ; multiline field eol replacement
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
-				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
+				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) . strFieldDelimiter
 			}
 		}
 		else ; we put all fields in the record (I assume the order of fields is the same for each object)
 			for strFieldName, strValue in objCollection[A_Index]
 			{
-				strValue := ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator)
+				strValue := ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate)
 				if (StrLen(strEolReplacement))
 					StringReplace, strValue, strValue, `r`n, %strEolReplacement%, All ; handle multiline data fields
-				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
+				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) . strFieldDelimiter
 			}
 		StringTrimRight, strRecord, strRecord, 1 ; remove extra field delimiter
 		strData := strData . strRecord . "`r`n"
@@ -890,7 +891,7 @@ ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """", bln
 		Added the strEncapsulator parameter to make it work with other encapsultors than double-quotes.
 */
 {
-	Reformat := False ; Assume String is OK
+	Reformat := blnAlwaysEncapsulate ; was False before the new parameter blnAlwaysEncapsulate - assume String is OK unless caller wants to encasulate anyway
 	IfInString, strF4C, `n ; Check for linefeeds
 		Reformat := True ; String must be bracketed by double-quotes
 	IfInString, strF4C, `r ; Check for linefeeds
