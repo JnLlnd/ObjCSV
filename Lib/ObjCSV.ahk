@@ -28,7 +28,11 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
-			0.5.4  2016-08-23  Add optional parameter to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed to set end-of-line character(s) in fields when line-breaks are replaced.  
+			0.5.5  2016-08-28  Optional parameter strEol to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed now empty by default.
+			If not provided, end-of-lines character(s) are detected in value to replace. The first end-of-lines character(s) found is used
+			for remaining fields and records.   
+            0.5.4  2016-08-23  Add optional parameter strEol to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed to set end-of-line
+			character(s) in fields when line-breaks are replaced.  
 			0.5.3  2016-08-21  Fix bug with blnAlwaysEncapsulate in ObjCSV_Collection2CSV.  
 			0.5.2  2016-07-24  Add an option to ObjCSV_Collection2CSV and blnAlwaysEncapsulate functions to force encapsulation of all values.  
 			0.5.1  2016-06-06  In ObjCSV_CSV2Collection if the ByRef parameter is empty, the file encoding is returned only for UTF-8 or
@@ -59,7 +63,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.5.3 (2016-08-21)
+	Version: v0.5.5 (2016-08-28)
 */
 
 
@@ -222,9 +226,9 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 ;================================================
 ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", intProgressType := 0
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
-	, strProgressText := "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "`r`n")
+	, strProgressText := "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "")
 /*!
-	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate] := 0, strEol := "`r`n")
+	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate] := 0, strEol := "")
 		Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.
 
 	Parameters:
@@ -240,7 +244,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default (system default ANSI code page).
 		blnAlwaysEncapsulate - (Optional) If true (or 1), always encapsulate values with field encapsulator. If false (or 0), fields are encapsulated only if required (see strEncapsulator above). False (or 0) by default.
-		strEol - (Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use "`n" for line-feed (ASCII 10) or "`r" for carriage-return (ASCII 13). "`r`n" by default.
+		strEol - (Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use "`r`n" (carriage-return + line-feed, ASCII 13 & 10), "`n" (line-feed, ASCII 10) or "`r" (carriage-return, ASCII 13). If the parameter is empty, the content is searched to detect the first end-of-lines character(s) detected in the string (in the order "`r`n", "`n", "`r"). The first end-of-lines character(s) found is used for remaining fields and records. Empty by default.
 
 	Returns:
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
@@ -287,10 +291,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 			intLineNumber := A_Index
 			for intColIndex, strFieldName in objHeader
 			{
-				strValue := objCollection[intLineNumber][Trim(strFieldName)]
-				if (StrLen(strEolReplacement)) ; multiline field eol replacement
-					if StrLen(strEol)
-						StringReplace, strValue, strValue, %strEol%, %strEolReplacement%, All ; handle multiline data fields
+				strValue := CheckEolReplacement(objCollection[intLineNumber][Trim(strFieldName)], strEolReplacement, strEol)
 				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) . strFieldDelimiter
 			}
 		}
@@ -298,9 +299,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 			for strFieldName, strValue in objCollection[A_Index]
 			{
 				strValue := ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate)
-				if (StrLen(strEolReplacement))
-					if StrLen(strEol)
-						StringReplace, strValue, strValue, %strEol%, %strEolReplacement%, All ; handle multiline data fields
+				strValue := CheckEolReplacement(strValue, strEolReplacement, strEol)
 				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) . strFieldDelimiter
 			}
 		StringTrimRight, strRecord, strRecord, 1 ; remove extra field delimiter
@@ -319,9 +318,9 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 ;================================================
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", intProgressType := 0
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
-	, strProgressText := "", strFileEncoding := "", strEol := "`r`n")
+	, strProgressText := "", strFileEncoding := "", strEol := "")
 /*!
-	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := ""])
+	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", strEol := ""])
 		Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
 
 	Parameters:
@@ -337,8 +336,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		strEolReplacement - (Optional) A fixed-width file should not include end-of-line within data. If it does and if a strEolReplacement is provided, end-of-line in multi-line fields are replaced by the string strEolReplacement and this (or these) characters are included in the fixed-width character count. Empty by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default (system default ANSI code page).
-		strEol - (Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use "`n" for line-feed (ASCII 10) or "`r" for carriage-return (ASCII 13). "`r`n" by default.
-
+		strEol - (Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use "`r`n" (carriage-return + line-feed, ASCII 13 & 10), "`n" (line-feed, ASCII 10) or "`r" (carriage-return, ASCII 13). If the parameter is empty, the content is searched to detect the first end-of-lines character(s) detected in the string (in the order "`r`n", "`n", "`r"). The first end-of-lines character(s) found is used for remaining fields and records. Empty by default.
 	Returns:
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
 */
@@ -395,10 +393,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 			for intColIndex, strFieldName in ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
 				; parse strFieldOrder handling encapsulated field names
 			{
-				strValue := objCollection[intLineNumber][Trim(strFieldName)]
-				if (StrLen(strEolReplacement)) ; multiline field eol replacement
-					if StrLen(strEol)
-						StringReplace, strValue, strValue, %strEol%, %strEolReplacement%, All ; handle multiline data fields
+				strValue := CheckEolReplacement(objCollection[intLineNumber][Trim(strFieldName)], strEolReplacement, strEol)
 				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
 					; add fixed-width data field for each column
 			}
@@ -408,9 +403,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 			intColIndex := 1
 			for strFieldName, strValue in objCollection[A_Index]
 			{
-				if (StrLen(strEolReplacement))
-					if StrLen(strEol)
-						StringReplace, strValue, strValue, %strEol%, %strEolReplacement%, All ; handle multiline data fields
+				strValue := CheckEolReplacement(strValue, strEolReplacement, strEol)
 				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
 					; add fixed-width data field for each column
 				intColIndex := intColIndex + 1
@@ -1211,6 +1204,31 @@ ProgressStop(intType)
 		SB_SetText("", -intType)
 }
 
+
+
+CheckEolReplacement(strData, strEolReplacement, ByRef strEol)
+{
+	if StrLen(strEolReplacement) ; multiline field eol replacement
+	{
+		if !StrLen(strEol)
+			strEol := GetEolCharacters(strData) ; if found, strEol will be re-used for next records
+		if StrLen(strEol)
+			StringReplace, strData, strData, %strEol%, %strEolReplacement%, All ; handle multiline data fields
+	}
+	return strData
+}
+
+
+
+GetEolCharacters(strData)
+; search to detect the first end-of-lines character(s) detected in the string (in the order "`r`n", "`n", "`r"). Returns empty if none is found.
+{
+	strEolCandidates := "`r`n|`n|`r"
+	loop, Parse, strEolCandidates, |
+		if InStr(strData, A_LoopField)
+			return A_LoopField
+	return := "" ; return empty if no end-of-line detected
+}
 
 
 /*
