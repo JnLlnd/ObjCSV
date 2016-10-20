@@ -28,9 +28,11 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.5.6  2016-10-20  Stop trimming data value read from CSV file. Addition of blnTrim parameter to ObjCSV_ReturnDSVObjectArray
+			(true by default for backward compatibility).  
 			0.5.5  2016-08-28  Optional parameter strEol to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed now empty by default.
 			If not provided, end-of-lines character(s) are detected in value to replace. The first end-of-lines character(s) found is used
-			for remaining fields and records.   
+			for remaining fields and records.  
             0.5.4  2016-08-23  Add optional parameter strEol to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed to set end-of-line
 			character(s) in fields when line-breaks are replaced.  
 			0.5.3  2016-08-21  Fix bug with blnAlwaysEncapsulate in ObjCSV_Collection2CSV.  
@@ -63,7 +65,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.5.5 (2016-08-28)
+	Version: v0.5.6 (2016-10-20)
 */
 
 
@@ -194,7 +196,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 				objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
 					; returns an object array from the delimited-separated-value strFieldNames string
 			objData := Object() ; object of one record in the collection
-			for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(strThisLine, strFieldDelimiter, strEncapsulator)
+			for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(strThisLine, strFieldDelimiter, strEncapsulator, false)
 				; returns an object array from each line of the delimited-separated-value file
 			{
 				if blnMultiline
@@ -921,7 +923,7 @@ ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """", bln
 
 
 ;================================================
-ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsulator := """")
+ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsulator := """", blnTrim := true)
 /*!
 	Function: ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter = ",", strEncapsulator = """")
 		Returns an object array from a delimiter-separated string.
@@ -930,6 +932,7 @@ ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsula
 		strCurrentDSVLine - String to convert to an object array
 		strDelimiter - (Optional) Field strDelimiter. One character, usually comma (default value) or tab.
 		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field strDelimiters or the strEncapsulator character itself. In this last case, the strEncapsulator character must be doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
+		blnTrim - Remove extra spaces at beginning and end of array item. True by default for backward compatibility.
 
 	Returns:
 		Returns an object array from a strDelimiter-separated string.
@@ -973,8 +976,8 @@ ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsula
 			field := RegExReplace(field,"^\" e "|\" e "$")
 			StringReplace,field,field,% strEncapsulator strEncapsulator,%strEncapsulator%, All
 		}
-		objReturnObject.Insert(Trim(field)) ; add an item in the object array and assign our value to it
-		;                                     Trim not in the original ReturnDSVArray but added for my script needs
+		objReturnObject.Insert(blnTrim ? Trim(field) : field) ; add an item in the object array and assign our value to it
+		;                                                       blnTrim and Trim not in the original ReturnDSVArray but added for my script needs
 		if (p1=0)
 		{                                   ; p1 is 0 when no more delimitor chars have been found
 			 objReturnObject.Remove()       ; so remove last item in the object array due to last appended delimitor
