@@ -26,6 +26,10 @@
   <td width="15%">strEncapsulator</td>
   <td width="85%">(Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: &quot;one &quot;&quot;quoted&quot;&quot; word&quot;. Double-quote by default.</td>
 </tr>
+<tr>
+  <td width="15%">blnAlwaysEncapsulate</td>
+  <td width="85%">(Optional) If true (or 1), always encapsulate values with field encapsulator. If false (or 0), fields are encapsulated only if required (see strEncapsulator above). False (or 0) by default.</td>
+</tr>
 </table>
 <h3>Returns</h3>
 <p>String with required encapsulator.</p>
