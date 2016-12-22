@@ -191,11 +191,21 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		}
 		else
 		{
-			if (A_Index = 1) and StrLen(strFieldNames)
-				; If we get here, bnHeader is false so there is no header in the CSV file but we have values
-				; in strFieldNames. In this case, we get field names from strFieldNames.
+			if (A_Index = 1)
+			{
+				; If we get here, bnHeader is false so there is no header in the CSV file
+				if !StrLen(strFieldNames)
+					; We must build the header
+				{
+					for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(strThisLine, strFieldDelimiter, strEncapsulator, false)
+						strFieldNames := strFieldNames . (StrLen(strFieldNames) ? strFieldDelimiter : "") . "C" . A_Index
+							; build strFieldNames to use as header and to return to caller
+					objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
+				}
+				; We have values in strFieldNames. Get field names from strFieldNames.
 				objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
 					; returns an object array from the delimited-separated-value strFieldNames string
+			}
 			objData := Object() ; object of one record in the collection
 			for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(strThisLine, strFieldDelimiter, strEncapsulator, false)
 				; returns an object array from each line of the delimited-separated-value file
@@ -207,15 +217,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 					StringReplace, strFieldData, strFieldData, %strEolReplacement%, `r`n, 1
 						; replace all user-supplied replacement character with end-of-line (`r`n), if present *** not tested on Unix files
 				}
-				if StrLen(objHeader[A_Index])
-					objData[objHeader[A_Index]] := strFieldData ; we have field names in objHeader[A_Index]
-				else
-				{
-					objData["C" . A_Index] := strFieldData
-						; we don't have field names so we use "C" + index numbers as key/field names
-					strFieldNames := strFieldNames . (StrLen(strFieldNames) ? strFieldDelimiter : "") . "C" . A_Index
-						; build strFieldNames to return to caller
-				}
+				objData[objHeader[A_Index]] := strFieldData ; we always have field names in objHeader[A_Index]
 			}
 			objCollection.Insert(objData) ; add the object (record) to the collection
 		}
