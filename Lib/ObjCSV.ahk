@@ -28,14 +28,15 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
-			0.5.8 In ObjCSV_CSV2Collection, fix bug when creating "C" names header if blnHeader is false (0) and strFieldNames is empty.  
+			0.5.9  2017-07-20 In ObjCSV_CSV2Collection, reverse change in v0.4.1 to import non-standard CSV files created by XL causing issue (stripping "=") in encapsulated fields with containing "...=""..."  
+			0.5.8  2016-12-22 In ObjCSV_CSV2Collection, fix bug when creating "C" names header if blnHeader is false (0) and strFieldNames is empty.  
 			0.5.7  2016-12-20  In ObjCSV_CSV2Collection, if blnHeader is false (0) and strFieldNames is empty, strFieldNames returns the "C" field names created by the function.  
 			0.5.6  2016-10-20  Stop trimming data value read from CSV file. Addition of blnTrim parameter to ObjCSV_ReturnDSVObjectArray
 			(true by default for backward compatibility).  
 			0.5.5  2016-08-28  Optional parameter strEol to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed now empty by default.
 			If not provided, end-of-lines character(s) are detected in value to replace. The first end-of-lines character(s) found is used
 			for remaining fields and records.  
-            0.5.4  2016-08-23  Add optional parameter strEol to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed to set end-of-line
+			0.5.4  2016-08-23  Add optional parameter strEol to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed to set end-of-line
 			character(s) in fields when line-breaks are replaced.  
 			0.5.3  2016-08-21  Fix bug with blnAlwaysEncapsulate in ObjCSV_Collection2CSV.  
 			0.5.2  2016-07-24  Add an option to ObjCSV_Collection2CSV and blnAlwaysEncapsulate functions to force encapsulation of all values.  
@@ -50,7 +51,7 @@
 			0.3.2  2013-11-27  Check presence of ROWS delimiters in HTML export template  
 			0.3.1  2013-10-10  Fix ProgressStop missing bug, fix numeric column names bug  
 			0.3.0  2013-10-07  Removed strRecordDelimiter, strOmitChars and strEndOfLine parameters. Replaced by ``r``n (CR-LF). 
-			Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed, 
+			Compatibility breaker. Review functions calls for ObjCSV_CSV2Collection, ObjCSV_Collection2CSV, ObjCSV_Collection2Fixed,
 			ObjCSV_Collection2HTML, ObjCSV_Collection2XML, ObjCSV_Format4CSV and ObjCSV_ReturnDSVObjectArray  
 			0.2.8  2013-10-06  Fix bug in progress start and stop  
 			0.2.7  2013-10-06  Memory management optimization and introduction of ErrorLevel results  
@@ -64,10 +65,10 @@
 			(ObjCSV_Collection2XML)  
 			0.1.3  2013-09-08  Multi-line replacement character at load time in ObjCSV_CSV2Collection  
 			0.1.2  2013-09-05  Standardize boolean parameters to 0/1 (not True/False) and without double-quotes  
-			0.1.1  2013-08-26  First release
+			0.1.1  2013-08-26  First release  
 
 	Author: By Jean Lalonde
-	Version: v0.5.8 (2016-12-22)
+	Version: v0.5.9 (2017-07-20)
 */
 
 
@@ -152,9 +153,9 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 	}
 	Loop, Parse, strData, `n, `r ; read each line (record) of the CSV file
 	{
-		StringReplace, strThisLine, A_LoopField, % "=" . strEncapsulator, %strEncapsulator%, All
-		intProgressIndex := intProgressIndex + StrLen(strThisLine) + 2
-		intProgressThisBatch := intProgressThisBatch + StrLen(strThisLine) + 2
+		; StringReplace, strThisLine, A_LoopField, % "=" . strEncapsulator, %strEncapsulator%, All ; reverse edit from v0.4.1 (see git for details)
+		intProgressIndex := intProgressIndex + StrLen(A_LoopField) + 2
+		intProgressThisBatch := intProgressThisBatch + StrLen(A_LoopField) + 2
 			; augment intProgressIndex of len of line + 2 for cr-lf
 		if (intProgressType AND (intProgressThisBatch > intProgressBatchSize))
 		{
@@ -164,7 +165,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		}
 		if (A_Index = 1) and (blnHeader) ; we have an header to read
 		{
-			objHeader := ObjCSV_ReturnDSVObjectArray(strThisLine, strFieldDelimiter, strEncapsulator)
+			objHeader := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator)
 				; returns an object array from the first line of the delimited-separated-value file
 			strFieldNamesMatchList := strFieldDelimiter
 			Loop, % objHeader.MaxIndex() ; check if fields names are empty or duplicated
@@ -198,7 +199,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 				if !StrLen(strFieldNames)
 					; We must build the header
 				{
-					for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(strThisLine, strFieldDelimiter, strEncapsulator, false)
+					for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, false)
 						strFieldNames := strFieldNames . (StrLen(strFieldNames) ? strFieldDelimiter : "") . "C" . A_Index
 							; build strFieldNames to use as header and to return to caller
 					objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
@@ -208,7 +209,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 					; returns an object array from the delimited-separated-value strFieldNames string
 			}
 			objData := Object() ; object of one record in the collection
-			for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(strThisLine, strFieldDelimiter, strEncapsulator, false)
+			for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, false)
 				; returns an object array from each line of the delimited-separated-value file
 			{
 				if blnMultiline
