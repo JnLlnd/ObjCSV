@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.5.8 In ObjCSV_CSV2Collection, fix bug when creating "C" names header if blnHeader is false (0) and strFieldNames is empty.  
 			0.5.7  2016-12-20  In ObjCSV_CSV2Collection, if blnHeader is false (0) and strFieldNames is empty, strFieldNames returns the "C" field names created by the function.  
 			0.5.6  2016-10-20  Stop trimming data value read from CSV file. Addition of blnTrim parameter to ObjCSV_ReturnDSVObjectArray
 			(true by default for backward compatibility).  
@@ -66,7 +67,7 @@
 			0.1.1  2013-08-26  First release
 
 	Author: By Jean Lalonde
-	Version: v0.5.7 (2016-12-20)
+	Version: v0.5.8 (2016-12-22)
 */
 
 
@@ -85,7 +86,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		blnHeader - (Optional) If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True (or 1) by default.
 		blnMultiline - (Optional) If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE-1: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details). NOTE-2: If blnMultiline is True, you can use the strEolReplacement parameter to specify a character (or string) that will be converted to line-breaks if found in the CSV file.
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
-		strFieldDelimiter - (Optional) Field delimiter in the CSV file. One character, usually comma (default value) or tab. According to locale setting of software (e.g. MS Office) or user preferences, delimiter can be semi-colon (;), pipe (|), space, etc. NOTE-1: End-of-line characters (`n or `r) are prohibited as field separator since they are used as record delimiters. NOTE-2: Using the Trim function, %A_Space% and %A_Tab% (when tab is not a delimiter) are removed from the beginning and end of all field names and data.
+		strFieldDelimiter - (Optional) Field delimiter in the CSV file. One character, usually comma (default value) or tab. According to locale setting of software (e.g. MS Office) or user preferences, delimiter can be semi-colon (;), pipe (|), space, etc. NOTE-1: End-of-line characters (`n or `r) are prohibited as field separator since they are used as record delimiters. NOTE-2: Using the Trim function, %A_Space% and %A_Tab% (when tab is not a delimiter) are removed from the beginning and end of all field names (but not of data since v0.5.6).
 		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field delimiters or the encapsulator character itself. In this last case, the encapsulator character must be doubled in the string. For example: "one ""quoted"" word". All fields and headers in the CSV file can be encapsulated, if desired by the file creator. Double-quote by default.
 		strEolReplacement - (Optional) Character (or string) that will be converted to line-breaks if found in the CSV file. Replacements occur only when blnMultiline is True. Empty by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
