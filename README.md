@@ -46,6 +46,6 @@ Library documentation:
 http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/ (updated to v0.5)
 
 A discussion on this library and tutorials can be found on the AutoHotkey forum:  
-http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/  
-http://www.autohotkey.com/board/topic/96619-objcsv-library-tutorial-basic/  
-http://www.autohotkey.com/board/topic/97147-parsing-csv-files-with-multi-line-fields/  
+https://www.autohotkey.com/boards/viewtopic.php?t=41  
+http://www.autohotkey.com/board/topic/96619-objcsv-library-tutorial-basic/ (on old closed forum)  
+http://www.autohotkey.com/board/topic/97147-parsing-csv-files-with-multi-line-fields/ (on old closed forum)  
