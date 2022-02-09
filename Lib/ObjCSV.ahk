@@ -17,7 +17,7 @@
 		* [Home of this library is on GitHub](https://github.com/JnLlnd/ObjCSV)
 		* [The most up-to-date version of this AHK file on GitHub](https://raw.github.com/JnLlnd/ObjCSV/master/Lib/ObjCSV.ahk)
 		* [Online ObjCSV Library Help](http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/)
-		* [Topic about this library on AutoHotkey forum](http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/)
+		* [Topic about this library on AutoHotkey forum](https://www.autohotkey.com/boards/viewtopic.php?t=41)
 		  
 		### INSTRUCTIONS
 			Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:
@@ -28,6 +28,7 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.5.10 BETA  2022-02-09 In ObjCSV_Collection2CSV, add strReuseDelimiters parameter allowing to specify to copy or combine existing fields in strFieldOrder
 			0.5.9  2017-07-20 In ObjCSV_CSV2Collection, reverse change in v0.4.1 to import non-standard CSV files created by XL causing issue (stripping "=") in encapsulated fields with containing "...=""..."  
 			0.5.8  2016-12-22 In ObjCSV_CSV2Collection, fix bug when creating "C" names header if blnHeader is false (0) and strFieldNames is empty.  
 			0.5.7  2016-12-20  In ObjCSV_CSV2Collection, if blnHeader is false (0) and strFieldNames is empty, strFieldNames returns the "C" field names created by the function.  

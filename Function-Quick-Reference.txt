@@ -1,9 +1,9 @@
 Library Quick Reference: ObjCSV Library
 	Author: By Jean Lalonde
-	Version: v0.5.9
+	Version: v0.5.10
 
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText := "", ByRef strFileEncoding := ""])
-ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := ""])
+ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "", strReuseDelimiters := ""])
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", strEol := ""])
 ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, intProgressType = 0, blnOverwrite = 0, strProgressText = "", strFileEncoding := ""])
 ObjCSV_Collection2XML(objCollection, strFilePath [, intProgressType = 0, blnOverwrite = 0, strProgressText = "", strFileEncoding := ""])
