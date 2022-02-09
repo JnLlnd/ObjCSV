@@ -237,9 +237,9 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 ;================================================
 ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", intProgressType := 0
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
-	, strProgressText := "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "")
+	, strProgressText := "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "", strReuseDelimiters := "")
 /*!
-	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate] := 0, strEol := "")
+	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate] := 0, strEol := "", strReuseDelimiters := "")
 		Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.
 
 	Parameters:
@@ -256,6 +256,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default (system default ANSI code page).
 		blnAlwaysEncapsulate - (Optional) If true (or 1), always encapsulate values with field encapsulator. If false (or 0), fields are encapsulated only if required (see strEncapsulator above). False (or 0) by default.
 		strEol - (Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use "`r`n" (carriage-return + line-feed, ASCII 13 & 10), "`n" (line-feed, ASCII 10) or "`r" (carriage-return, ASCII 13). If the parameter is empty, the content is searched to detect the first end-of-lines character(s) detected in the string (in the order "`r`n", "`n", "`r"). The first end-of-lines character(s) found is used for remaining fields and records. Empty by default.
+		strReuseDelimiters - (Optional) Characters used in strFieldOrder allowing to copy or combine fields from the existing record in new fields. The first character delimits the begining of a reuse and the second character is the reuse closing delimiter. These delimiters are used for a whole reuse field and in three internal sections: for example with delimiters "[]", "[[field(s)][format][name]]". The first internal section "[field(s)]" list the fields to reuse, using the same delimiter as input file, for example "[field1,field2,field3]"; the second section "[format]" specify the format of the new field with insertion field to reuse by their number, for example "[[2] ... [1] ... [3]]"; the last section "[name]" specify the name of the new field. For example: "[LastName,FirstName,City][Name: [2] [1] ([3])][Name and city]" would reuse the three existing fields to create a new one named "Name and city": "Presley,Elvis,Memphis,Elvis Presley (Memphis)". Reused fields must appear in the fields list strFieldOrder before they can be reused. Because it includes strFieldDelimiter, this whole field must be enclosed with strEncapsulator. Empty by default.
 
 	Returns:
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
@@ -268,6 +269,9 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
+	if StrLen(strFieldOrder) ; we put only these fields, in this order
+		objHeader := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator, strReuseDelimiters)
+			; parse strFieldOrder handling encapsulated field names, keeping original reuse field names
 	if (blnHeader) ; put the field names (header) in the first line of the CSV file
 	{
 		if !StrLen(strFieldOrder)
@@ -279,20 +283,32 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 					. strFieldDelimiter
 			StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
 		}
-		strData := strFieldOrder . "`r`n" ; put this header as first line of the file
+		if StrLen(strReuseDelimiters)
+		{
+			; get resused fields new names for header
+			For intOrder, strFieldName in objHeader
+			{
+				if SubStr(strFieldName, 1, 1) = StrSplit(strReuseDelimiters)[1]
+					strNewFieldName := GetReuseNewFieldName(strFieldName, StrSplit(strReuseDelimiters)[2] . StrSplit(strReuseDelimiters)[1])
+				else
+					strNewFieldName := strFieldName
+				
+				strFieldNames .= ObjCSV_Format4CSV(strNewFieldName, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) . strFieldDelimiter
+			}
+			strData := SubStr(strFieldNames, 1, -1) . "`r`n" ; remove last separator, put this header as first line of the file
+		}
+		else
+			strData := strFieldOrder . "`r`n" ; put this header as first line of the file
 	}
 	if (blnOverwrite)
 		FileDelete, %strFilePath%
-	if StrLen(strFieldOrder) ; we put only these fields, in this order
-		objHeader := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
-			; parse strFieldOrder handling encapsulated field names
 	Loop, %intMax% ; for each record in the collection
 	{
 		strRecord := "" ; line to add to the CSV file
 		if !Mod(A_Index, intProgressBatchSize) ; update progress bar and save every %intProgressBatchSize% records
 		{
 			if (intProgressType)
-				ProgressUpdate(intProgressType, A_index, intMax, strProgressText)
+				ProgressUpdate(intProgressType, A_Index, intMax, strProgressText)
 			If !SaveBatch(strData, strFilePath, intProgressType, strFileEncoding)
 				return
 			strData := ""
@@ -300,10 +316,17 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
 			intLineNumber := A_Index
+			objReusableFields := Object()
 			for intColIndex, strFieldName in objHeader
+				; strFieldName in objHeader contain original reuse field names
 			{
-				strValue := CheckEolReplacement(objCollection[intLineNumber][Trim(strFieldName)], strEolReplacement, strEol)
+				if (SubStr(strFieldName, 1, 1) = SubStr(strReuseDelimiters, 1, 1))
+					strValue := ReuseFields(strFieldName, objCollection[intLineNumber], strReuseDelimiters, objHeader, objReusableFields, strFieldName)
+				else
+					strValue := objCollection[intLineNumber][Trim(strFieldName)]
+				strValue := CheckEolReplacement(strValue, strEolReplacement, strEol)
 				strRecord := strRecord . ObjCSV_Format4CSV(strValue, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) . strFieldDelimiter
+				objReusableFields[strFieldName] := strValue ; for possible reuse of a reuse field
 			}
 		}
 		else ; we put all fields in the record (I assume the order of fields is the same for each object)
@@ -883,7 +906,7 @@ ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", intPro
 ;================================================
 ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """", blnAlwaysEncapsulate := 0)
 /*!
-	Function: ObjCSV_Format4CSV(strF4C [, strFieldDelimiter = ",", strEncapsulator = """"])
+	Function: ObjCSV_Format4CSV(strF4C [, strFieldDelimiter = ",", strEncapsulator = """"], blnAlwaysEncapsulate := 0)
 		Add encapsulator before and after strF4C if the string includes line breaks, field delimiter or field encapsulator. Encapsulated field encapsulators are doubled.
 		  
 	Parameters:
@@ -934,7 +957,7 @@ ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """", bln
 ;================================================
 ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsulator := """", blnTrim := true)
 /*!
-	Function: ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter = ",", strEncapsulator = """")
+	Function: ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter = ",", strEncapsulator = """", blnTrim := true)
 		Returns an object array from a delimiter-separated string.
 		  
 	Parameters:
@@ -1241,6 +1264,51 @@ GetEolCharacters(strData)
 			return A_LoopField
 	return := "" ; return empty if no end-of-line detected
 }
+
+
+
+ReuseFields(strReuseHeader, objLine, strReuseDelimiters, objHeader, objReusableFields, ByRef strFieldName)
+/*
+Copy or combine fields from the existing record from objLine in new field.
+The first character delimits the begining of a reuse and the second character is the reuse closing delimiter.
+These delimiters are used for a whole reuse field and in three internal sections: for example with delimiters "[]", "[[field(s)][format][name]]".
+1) The first internal section "[field(s)]" list the fields to reuse, using the same delimiter as input file, for example "[field1,field2,field3]".
+2) The second section "[format]" specify the format of the new field with insertion field to reuse by their number, for example "[[2] ... [1] ... [3]]".
+3) The last section "[name]" specify the name of the new field.
+For example: "[LastName,FirstName,City][Name: [2] [1] ([3])][Name and city]" would reuse the three existing fields to create a new one named "Name and city": "Presley,Elvis,Memphis,Elvis Presley (Memphis)".
+Reused fields must appear in the fields list before they can be reused.
+Because it includes strFieldDelimiter, this whole field must be enclosed with strEncapsulator. Empty by default.
+*/
+{
+	strReuseStart := SubStr(strReuseDelimiters, 1, 1)
+	strReuseEnd := SubStr(strReuseDelimiters, 2, 1)
+	strSectionSeparator := strReuseEnd . strReuseStart
+	strReuseFields := SubStr(strReuseHeader, 3, InStr(strReuseHeader, strReuseEnd) - 3)
+	aaReuseFields := StrSplit(strReuseFields, ",")
+	intSectionSeparator := InStr(strReuseHeader, strSectionSeparator)
+	strReuseFormat := SubStr(strReuseHeader, intSectionSeparator + 2, InStr(strReuseHeader, strSectionSeparator, , , 2) - intSectionSeparator - 2)
+	strFieldName := GetReuseNewFieldName(strReuseHeader, strSectionSeparator)
+	strNewField := strReuseFormat
+	Loop
+	{
+		if InStr(strNewField, strReuseStart . A_Index . strReuseEnd)
+			strNewField := StrReplace(strNewField, strReuseStart . A_Index . strReuseEnd, objLine[aaReuseFields[A_Index]])
+ 		else
+			break
+	}
+	return strNewField
+}
+
+
+
+GetReuseNewFieldName(strReuseHeader, strSectionSeparator)
+; extract the new field name from a reuse field in the last section of its header
+; for example with delimiters "[]": "[[field(s)][format][name]]"
+{
+	strFieldName := SubStr(strReuseHeader, InStr(strReuseHeader, strSectionSeparator, , 0) + 2)
+	return SubStr(strFieldName, 1, -2)
+}
+
 
 
 /*
