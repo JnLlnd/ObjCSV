@@ -74,7 +74,7 @@ ObjCSVTest Combine Fields
 			0.1.1  2013-08-26  First release  
 
 	Author: By Jean Lalonde
-	Version: v0.5.9 (2017-07-20)
+	Version BETA: v0.5.11 (2022-02-24)
 */
 
 
