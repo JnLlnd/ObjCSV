@@ -3,7 +3,7 @@ Library Quick Reference: ObjCSV Library
 	Version: v0.5.11
 
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText := "", ByRef strFileEncoding := "", strReuseDelimiters := ""])
-ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := ""])
+ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "", strReuseDelimiters := ""])
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", strEol := ""])
 ObjCSV_Collection2HTML(objCollection, strFilePath, strTemplateFile [, strTemplateEncapsulator = ~, intProgressType = 0, blnOverwrite = 0, strProgressText = "", strFileEncoding := ""])
 ObjCSV_Collection2XML(objCollection, strFilePath [, intProgressType = 0, blnOverwrite = 0, strProgressText = "", strFileEncoding := ""])
@@ -12,4 +12,4 @@ ObjCSV_ListView2Collection([strGuiID = "", strListViewID = "", strFieldOrder = "
 ObjCSV_SortCollection(objCollection, strSortFields [, strSortOptions = "", intProgressType = 0, strProgressText = ""])
 ObjCSV_Format4CSV(strF4C [, strFieldDelimiter = ",", strEncapsulator = """", blnAlwaysEncapsulate := 0])
 ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine [, strDelimiter = ",", strEncapsulator = """", blnTrim := true, strReuseDelimiters := ""])
-ObjCSV_BuildReuseField(strReuseDelimiters, strReuseHeader, objLine, objHeader, ByRef strNewFieldName)
+ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, ByRef strNewFieldName)
