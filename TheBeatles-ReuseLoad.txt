@@ -1,4 +1,4 @@
-str_Name,str_Album,lng_Track_Number,str_Genre,lng_Total_Time,lng_Size,"[[[str_Name] ([str_Genre])][strNameAndGenre]]"
+str_Name,str_Album,[[Album: [str_Album] / Song: [str_Name]][str_AlbumName]],lng_Track_Number,str_Genre,lng_Total_Time,lng_Size,[[#[lng_Track_Number] [str_AlbumName]][str_TrackAlbumName]]
 "Hey Jude - Sgt. Pepper's Lonely Hearts Club Band (Reprise) (LOVE)",LOVE,24,Pop,320914,5159544
 March Of The Meanies,Yellow Submarine,11,Soundtrack,139415,3388931
 Tell Me What You See,Help!,11,Pop,158040,3840243
