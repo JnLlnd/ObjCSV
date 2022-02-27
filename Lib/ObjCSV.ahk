@@ -224,14 +224,16 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			objRecordData := Object() ; object of one record in the collection
 			objLineArray := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, false)
 				; returns an object array from this line of the delimited-separated-value file
+			intAddedFields := 0 ; count the number of reused fields to insert in the array
 			loop, % objHeader.MaxIndex()
 			{
 				strFieldHeader := objHeader[A_Index] ; header for this line
-				strFieldData := objLineArray[A_Index] ; data for this line
+				strFieldData := objLineArray[A_Index - intAddedFields] ; data for this line
 				if StrLen(strReuseDelimiters) and InStr(strFieldHeader, objReuseDelimiters[1] . objReuseDelimiters[1]) ; we have to build a reuse field
 				{
 					strFieldData := ObjCSV_BuildReuseField(strReuseDelimiters, strFieldHeader, objRecordData, objHeader, strNewFieldName)
 					strFieldHeader := strNewFieldName
+					intAddedFields++
 				}
 				if blnMultiline
 				{
