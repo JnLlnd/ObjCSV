@@ -2,58 +2,6 @@
 /*
 ObjCSVTest Combine Fields
 */
-
-#NoEnv
-#SingleInstance, force
-
-Gosub, LoadFile
-Gosub, SaveFile
-
-ExitApp
-
-
-LoadFile:
-strFile := A_ScriptDir .  "\..\..\CSVBuddy\Reuse-None-Simple.csv"
-; strFile := A_ScriptDir .  "\..\..\CSVBuddy\Reuse-Double-Simple.csv"
-; strFile := A_ScriptDir .  "\..\..\CSVBuddy\TEST-Reuse-One-Simple.csv"
-; strFile := A_ScriptDir .  "\..\..\CSVBuddy\Reuse-None-Simple.csv"
-; strFile := A_ScriptDir .  "\TheBeatles-ReuseLoad.txt"
-
-; MsgBox, 4, Display INPUT file?, Input file:`n`n%strFile%`n`nDisplay file?
-; IfMsgBox, Yes
-	; Run %strFile%
-
-strFields := ""
-obj := ObjCSV_CSV2Collection(strFile, strFields, , , , , , , , , "[]") ; load the CSV file to a collection of objects
-return
-
-
-
-SaveFile:
-strFile := StrReplace(strFile, ".csv", "-OUTPUT.txt")
-strFields := "F1,F2,[[[F1] and [F2]][F1&2]],F3"
-; strFields := "F1,[[[F1] bis][F4]],F2,F3"
-
-; ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", intProgressType := 0
-	; , blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
-	; , strProgressText := "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "", strReuseDelimiters := "")
-; ObjCSV_Collection2CSV(obj, strFile, 0, strFields, , 1, , , , , , , , "[]") ; save the collection of objects to a CSV file and overwrite this file
-
-; ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", intProgressType := 0
-	; , blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
-	; , strProgressText := "", strFileEncoding := "", strEol := "", strReuseDelimiters := "")
-ObjCSV_Collection2Fixed(obj, strFile, "5,5,10,5", 1, strFields, , 1, , , , , , , "[]")
-
-MsgBox, 4, Display file?, File saved:`n`n%strFile%`n`nDisplay file?
-IfMsgBox, Yes
-	Run %strFile%
-return
-
-
-;===============================================
-/*
-ObjCSVTest Combine Fields
-*/
 /*!
 	Library: ObjCSV Library
 		AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
@@ -446,6 +394,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default (system default ANSI code page).
 		strEol - (Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use "`r`n" (carriage-return + line-feed, ASCII 13 & 10), "`n" (line-feed, ASCII 10) or "`r" (carriage-return, ASCII 13). If the parameter is empty, the content is searched to detect the first end-of-lines character(s) detected in the string (in the order "`r`n", "`n", "`r"). The first end-of-lines character(s) found is used for remaining fields and records. Empty by default.
+		strReuseDelimiters - (Optional) See ObjCSV_CSV2Collection. Empty by default.
 	Returns:
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
 */
