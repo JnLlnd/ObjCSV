@@ -32,6 +32,7 @@ ObjCSVTest Combine Fields
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.5.12 BETA  2022-02-28 Simplify reuse specs; add function ObjCSV_BuildReuseField, reuse fields support to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed (reuse fields are not supported in ObjCSV_Collection2HTML and ObjCSV_Collection2XML)
 			0.5.11 BETA  2022-02-24 Add reuse fields support to ObjCSV_CSV2Collection and ObjCSV_ReturnDSVObjectArray; reverse changes in ObjCSV_Collection2CSV now covered by ObjCSV_ReturnDSVObjectArray; 
 			0.5.10 BETA  2022-02-09 In ObjCSV_Collection2CSV, add strReuseDelimiters parameter allowing to specify to copy or combine existing fields in strFieldOrder
 			0.5.9  2017-07-20 In ObjCSV_CSV2Collection, reverse change in v0.4.1 to import non-standard CSV files created by XL causing issue (stripping "=") in encapsulated fields with containing "...=""..."  
