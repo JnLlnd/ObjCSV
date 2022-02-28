@@ -2,6 +2,58 @@
 /*
 ObjCSVTest Combine Fields
 */
+
+#NoEnv
+#SingleInstance, force
+
+Gosub, LoadFile
+Gosub, SaveFile
+
+ExitApp
+
+
+LoadFile:
+strFile := A_ScriptDir .  "\..\..\CSVBuddy\Reuse-None-Simple.csv"
+; strFile := A_ScriptDir .  "\..\..\CSVBuddy\Reuse-Double-Simple.csv"
+; strFile := A_ScriptDir .  "\..\..\CSVBuddy\TEST-Reuse-One-Simple.csv"
+; strFile := A_ScriptDir .  "\..\..\CSVBuddy\Reuse-None-Simple.csv"
+; strFile := A_ScriptDir .  "\TheBeatles-ReuseLoad.txt"
+
+; MsgBox, 4, Display INPUT file?, Input file:`n`n%strFile%`n`nDisplay file?
+; IfMsgBox, Yes
+	; Run %strFile%
+
+strFields := ""
+obj := ObjCSV_CSV2Collection(strFile, strFields, , , , , , , , , "[]") ; load the CSV file to a collection of objects
+return
+
+
+
+SaveFile:
+strFile := StrReplace(strFile, ".csv", "-OUTPUT.txt")
+strFields := "F1,F2,[[[F1] and [F2]][F1&2]],F3"
+; strFields := "F1,[[[F1] bis][F4]],F2,F3"
+
+; ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", intProgressType := 0
+	; , blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
+	; , strProgressText := "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "", strReuseDelimiters := "")
+; ObjCSV_Collection2CSV(obj, strFile, 0, strFields, , 1, , , , , , , , "[]") ; save the collection of objects to a CSV file and overwrite this file
+
+; ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", intProgressType := 0
+	; , blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
+	; , strProgressText := "", strFileEncoding := "", strEol := "", strReuseDelimiters := "")
+ObjCSV_Collection2Fixed(obj, strFile, "5,5,10,5", 1, strFields, , 1, , , , , , , "[]")
+
+MsgBox, 4, Display file?, File saved:`n`n%strFile%`n`nDisplay file?
+IfMsgBox, Yes
+	Run %strFile%
+return
+
+
+;===============================================
+/*
+ObjCSVTest Combine Fields
+*/
 /*!
 	Library: ObjCSV Library
 		AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
@@ -375,7 +427,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 ;================================================
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", intProgressType := 0
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
-	, strProgressText := "", strFileEncoding := "", strEol := "")
+	, strProgressText := "", strFileEncoding := "", strEol := "", strReuseDelimiters := "")
 /*!
 	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", strEol := ""])
 		Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
@@ -398,6 +450,8 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
 */
 {
+	objReuseDelimiters := StrSplit(strReuseDelimiters)
+	objReuseSpecs := Object()
 	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter%
 		; get width for each field in the pseudo-array arrIntWidth, so %arrIntWidth1% or arrIntWidth%intColIndex%
 	strData := "" ; string to save in the fixed-width file
@@ -407,6 +461,23 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
+	if StrLen(strReuseDelimiters) ; we have to get reuse field name(s)
+	{
+		objHeaderWithReuse := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator, true, strReuseDelimiters)
+		strFieldOrder := "" ; rebuild with reuse fields name
+		for intColIndex, strFieldHeader in objHeaderWithReuse
+		{
+			if InStr(strFieldHeader, objReuseDelimiters[1] . objReuseDelimiters[1]) ; this is reuse specs
+			{
+				strReuseFieldName := GetReuseNewFieldName(strFieldHeader, strReuseDelimiters)
+				objReuseSpecs[strReuseFieldName] := strFieldHeader ; save specs for use with data lines
+				strFieldHeader := strReuseFieldName ; replace reuse specs with field name
+			}
+			strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldHeader, arrIntWidth%intColIndex%)
+			strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldHeader, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
+		}
+		StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
+	}	
 	if (blnHeader) ; put the field names (header) in the first line of the file
 	{
 		strHeaderFixed := ""
@@ -433,6 +504,9 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 	}
 	if (blnOverwrite)
 		FileDelete, %strFilePath%
+	if StrLen(strFieldOrder) ; we put only these fields, in this order
+		objHeader := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+			; parse strFieldOrder handling encapsulated field names
 	Loop, %intMax% ; for each record in the collection
 	{
 		strRecord := "" ; line to add to the file
@@ -447,10 +521,14 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		if StrLen(strFieldOrder) ; we put only these fields, in this order
 		{
 			intLineNumber := A_Index
-			for intColIndex, strFieldName in ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+			; for intColIndex, strFieldName in ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator)
+			for intColIndex, strFieldName in objHeader
 				; parse strFieldOrder handling encapsulated field names
 			{
-				strValue := CheckEolReplacement(objCollection[intLineNumber][Trim(strFieldName)], strEolReplacement, strEol)
+				if StrLen(strReuseDelimiters) and objReuseSpecs.HasKey(strFieldName) ; we have to build the new field name
+					strValue := ObjCSV_BuildReuseField(strReuseDelimiters, objReuseSpecs[strFieldName], objCollection[intLineNumber], objHeader, strNewFieldName)
+				else
+					strValue := CheckEolReplacement(objCollection[intLineNumber][Trim(strFieldName)], strEolReplacement, strEol)
 				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
 					; add fixed-width data field for each column
 			}
