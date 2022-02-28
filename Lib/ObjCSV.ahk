@@ -294,6 +294,22 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
+	if StrLen(strReuseDelimiters) ; we have to get reuse field name(s)
+	{
+		objHeaderWithReuse := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator, true, strReuseDelimiters)
+		strFieldOrder := "" ; build a new field order with reuse name replacing reuse specs
+		for intKey, strFieldHeader in objHeaderWithReuse
+		{
+			if InStr(strFieldHeader, objReuseDelimiters[1] . objReuseDelimiters[1]) ; this is reuse specs
+			{
+				strReuseFieldName := GetReuseNewFieldName(strFieldHeader, strReuseDelimiters)
+				objReuseSpecs[strReuseFieldName] := strFieldHeader ; save specs for use with data lines
+				strFieldHeader := strReuseFieldName ; replace reuse specs with fiels name
+			}
+			strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldHeader, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) . strFieldDelimiter
+		}
+		StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
+	}	
 	if (blnHeader) ; put the field names (header) in the first line of the CSV file
 	{
 		if !StrLen(strFieldOrder)
@@ -305,22 +321,6 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 					. strFieldDelimiter
 			StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
 		}
-		if StrLen(strReuseDelimiters) ; we have to get reuse field name(s)
-		{
-			objHeaderWithReuse := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator, true, strReuseDelimiters)
-			strFieldOrder := "" ; build a new field order with reuse name replacing reuse specs
-			for intKey, strFieldHeader in objHeaderWithReuse
-			{
-				if InStr(strFieldHeader, objReuseDelimiters[1] . objReuseDelimiters[1]) ; this is reuse specs
-				{
-					strReuseFieldName := GetReuseNewFieldName(strFieldHeader, strReuseDelimiters)
-					objReuseSpecs[strReuseFieldName] := strFieldHeader ; save specs for use with data lines
-					strFieldHeader := strReuseFieldName ; replace reuse specs with fiels name
-				}
-				strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldHeader, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) . strFieldDelimiter
-			}
-			StringTrimRight, strFieldOrder, strFieldOrder, 1 ; remove extra field delimiter
-		}	
 		strData := strFieldOrder . "`r`n" ; put this header as first line of the file
 	}
 	if (blnOverwrite)
