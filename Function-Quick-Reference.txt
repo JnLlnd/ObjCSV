@@ -12,4 +12,5 @@ ObjCSV_ListView2Collection([strGuiID = "", strListViewID = "", strFieldOrder = "
 ObjCSV_SortCollection(objCollection, strSortFields [, strSortOptions = "", intProgressType = 0, strProgressText = ""])
 ObjCSV_Format4CSV(strF4C [, strFieldDelimiter = ",", strEncapsulator = """", blnAlwaysEncapsulate := 0])
 ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine [, strDelimiter = ",", strEncapsulator = """", blnTrim := true, strReuseDelimiters := ""])
-ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, ByRef strNewFieldName)
+ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, intRowNumber, ByRef strNewFieldName)
+ObjCSV_ReuseSpecsError(strReuseDelimiters, strReuseSpecs)
