@@ -32,12 +32,19 @@ ObjCSVTest Combine Fields
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
-			0.5.12 BETA  2022-02-28 Simplify reuse specs; add function ObjCSV_BuildReuseField, reuse fields support to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed (reuse fields are not supported in ObjCSV_Collection2HTML and ObjCSV_Collection2XML)
-			0.5.11 BETA  2022-02-24 Add reuse fields support to ObjCSV_CSV2Collection and ObjCSV_ReturnDSVObjectArray; reverse changes in ObjCSV_Collection2CSV now covered by ObjCSV_ReturnDSVObjectArray; 
-			0.5.10 BETA  2022-02-09 In ObjCSV_Collection2CSV, add strReuseDelimiters parameter allowing to specify to copy or combine existing fields in strFieldOrder
-			0.5.9  2017-07-20 In ObjCSV_CSV2Collection, reverse change in v0.4.1 to import non-standard CSV files created by XL causing issue (stripping "=") in encapsulated fields with containing "...=""..."  
+			0.5.13 BETA  2022-03-28 add function ObjCSV_ReuseSpecsError to validate reuse specs syntax, return ErrorLevel if error in
+			ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed, add row number parameter to ObjCSV_BuildReuseField for placeholder ROWNUMBER.  
+			0.5.12 BETA  2022-02-28 Simplify reuse specs; add function ObjCSV_BuildReuseField, reuse fields support to ObjCSV_Collection2CSV
+			and ObjCSV_Collection2Fixed (reuse fields are not supported in ObjCSV_Collection2HTML and ObjCSV_Collection2XML).  
+			0.5.11 BETA  2022-02-24 Add reuse fields support to ObjCSV_CSV2Collection and ObjCSV_ReturnDSVObjectArray; reverse changes in
+			ObjCSV_Collection2CSV now covered by ObjCSV_ReturnDSVObjectArray.  
+			0.5.10 BETA  2022-02-09 In ObjCSV_Collection2CSV, add strReuseDelimiters parameter allowing to specify to copy or combine
+			existing fields in strFieldOrder.  
+			0.5.9  2017-07-20 In ObjCSV_CSV2Collection, reverse change in v0.4.1 to import non-standard CSV files created by XL causing issue
+			(stripping "=") in encapsulated fields with containing "...=""..."  
 			0.5.8  2016-12-22 In ObjCSV_CSV2Collection, fix bug when creating "C" names header if blnHeader is false (0) and strFieldNames is empty.  
-			0.5.7  2016-12-20  In ObjCSV_CSV2Collection, if blnHeader is false (0) and strFieldNames is empty, strFieldNames returns the "C" field names created by the function.  
+			0.5.7  2016-12-20  In ObjCSV_CSV2Collection, if blnHeader is false (0) and strFieldNames is empty, strFieldNames returns the
+			"C" field names created by the function.  
 			0.5.6  2016-10-20  Stop trimming data value read from CSV file. Addition of blnTrim parameter to ObjCSV_ReturnDSVObjectArray
 			(true by default for backward compatibility).  
 			0.5.5  2016-08-28  Optional parameter strEol to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed now empty by default.
@@ -75,7 +82,7 @@ ObjCSVTest Combine Fields
 			0.1.1  2013-08-26  First release  
 
 	Author: By Jean Lalonde
-	Version BETA: v0.5.11 (2022-02-24)
+	Version BETA: v0.5.13 (2022-03-28)
 */
 
 
@@ -196,7 +203,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 						strFieldNames := strFieldName ; return the wrong specs in strFieldNames (can be used for an error message)
 					else
 					{
-						ObjCSV_BuildReuseField(strReuseDelimiters, strFieldName, objRecordData, objHeader, strNewFieldName)
+						ObjCSV_BuildReuseField(strReuseDelimiters, strFieldName, objRecordData, objHeader, 0, strNewFieldName) ; only to get ByRef strNewFieldName
 						strFieldNames := strFieldNames . ObjCSV_Format4CSV(strNewFieldName, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
 					}
 				}
@@ -240,7 +247,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 				strFieldData := objLineArray[A_Index - intAddedFields] ; data for this line
 				if (StrLen(strReuseDelimiters) and SubStr(strFieldHeader, 1, 2) = objReuseDelimiters[1] . objReuseDelimiters[1]) ; we have to build a reuse field
 				{
-					strFieldData := ObjCSV_BuildReuseField(strReuseDelimiters, strFieldHeader, objRecordData, objHeader, strNewFieldName)
+					strFieldData := ObjCSV_BuildReuseField(strReuseDelimiters, strFieldHeader, objRecordData, objHeader, objCollection.Length() + 1, strNewFieldName)
 					strFieldHeader := strNewFieldName
 					intAddedFields++
 				}
@@ -362,7 +369,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 			for intColIndex, strFieldName in objHeader
 			{
 				if StrLen(strReuseDelimiters) and objReuseSpecs.HasKey(strFieldName) ; we have to build the new field name
-					strValue := ObjCSV_BuildReuseField(strReuseDelimiters, objReuseSpecs[strFieldName], objCollection[intLineNumber], objHeader, strNewFieldName)
+					strValue := ObjCSV_BuildReuseField(strReuseDelimiters, objReuseSpecs[strFieldName], objCollection[intLineNumber], objHeader, intLineNumber, strNewFieldName)
 				else
 					strValue := objCollection[intLineNumber][Trim(strFieldName)]
 				strValue := CheckEolReplacement(strValue, strEolReplacement, strEol)
@@ -500,7 +507,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 				; parse strFieldOrder handling encapsulated field names
 			{
 				if StrLen(strReuseDelimiters) and objReuseSpecs.HasKey(strFieldName) ; we have to build the new field name
-					strValue := ObjCSV_BuildReuseField(strReuseDelimiters, objReuseSpecs[strFieldName], objCollection[intLineNumber], objHeader, strNewFieldName)
+					strValue := ObjCSV_BuildReuseField(strReuseDelimiters, objReuseSpecs[strFieldName], objCollection[intLineNumber], objHeader, intLineNumber, strNewFieldName)
 				else
 					strValue := CheckEolReplacement(objCollection[intLineNumber][Trim(strFieldName)], strEolReplacement, strEol)
 				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
@@ -1112,7 +1119,7 @@ ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsula
 
 
 ;================================================
-ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, ByRef strNewFieldName)
+ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, intRowNumber, ByRef strNewFieldName)
 /*!
 	Function: ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, ByRef strNewFieldName)
 		Returns the content of a field copying or combining fields from the existing record from objLine in new field.
@@ -1122,6 +1129,7 @@ ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, By
 		strReuseSpecs - String including the name and format of the reuse fields and the name of the new field.
 		objLine - Single array containing the values that can be reused
 		objHeader - Single array containing the headers of the values in objLine
+		intRowNumber - Integer value, current line number (used to replace ROWNUMBER placeholder)
 		strNewFieldName - (ByRef) Reuse field name
 
 	Returns:
@@ -1129,7 +1137,7 @@ ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, By
 	
 	Remarks:
 		The delimiters are used for a whole reuse field and in two internal sections: for example with delimiters "[]", "[[format][name]]".
-		1) The first internal section "[format]" specify the format of the new field with insertion field to reuse by specifying their name between reuse delimiters, for example "[[field3] ... [field1]]".
+		1) The first internal section "[format]" specify the format of the new field with insertion field to reuse by specifying their name between reuse delimiters, for example "[[field3] ... [field1]]". This section may also include the ROPWNUMBER placeholder, for example "#[ROWNUMBER]")
 		2) The second section "[name]" specify the name of the new field.
 		Reused fields must appear in objHeader before they can be reused.
 		If the reuse specs include strFieldDelimiter, this whole reuse field must be enclosed with strEncapsulator.
@@ -1147,6 +1155,7 @@ ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, By
 	for strKey, strData in objLine
 		if InStr(strReuseField, strReuseStart . strKey . strReuseEnd)
 			strReuseField := StrReplace(strReuseField, strReuseStart . strKey . strReuseEnd, objLine[strKey])
+	strReuseField := StrReplace(strReuseField, strReuseStart . "ROWNUMBER" . strReuseEnd, intRowNumber)
 	return strReuseField ; return field data
 }
 ;================================================
@@ -1156,7 +1165,7 @@ ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, By
 ;================================================
 ObjCSV_ReuseSpecsError(strReuseDelimiters, strReuseSpecs)
 /*!
-	Function: ObjCSV_ReuseSpecsError
+	Function: ObjCSV_ReuseSpecsError(strReuseDelimiters, strReuseSpecs)
 		Validate the syntax of the reuse specs and return an error code or 0 if there is no error.
 	
 	Parameters:
@@ -1176,7 +1185,6 @@ ObjCSV_ReuseSpecsError(strReuseDelimiters, strReuseSpecs)
 {
 	; call the recursive function to validate delimiters, starting at first character to validate the whole reuse specs
 	intEndFormat := FindClosingMatch(StrSplit(strReuseDelimiters), StrSplit(strReuseSpecs), 1, intSections)
-
 	if (StrLen(strReuseSpecs) <> intEndFormat) ; opening and closing delimiters in reuse specs do not match
 		return -1
 	if !(intSections) ; empty or 0, no section found in reuse specs
@@ -1475,14 +1483,12 @@ FindClosingMatch(objReuseDelimiters, objReuseSpecs, intPos, ByRef intSections, i
 	Loop
 	{
 		intPos++
-		
 		if (objReuseSpecs[intPos] = objReuseDelimiters[1]) ; this is the beginning of a section
 		{
 			if (intLevel = 1) ; this is a first level section
 				intSections++
 			intPos := FindClosingMatch(objReuseDelimiters, objReuseSpecs, intPos, intSections, intLevel + 1) ; RECURSIVE
 		}
-		
 		else if (objReuseSpecs[intPos] = objReuseDelimiters[2]) ; this is the matching closing delimiter
 			return intPos
 		else if (intPos > objReuseSpecs.MaxIndex()) ; there is no matching parameter
