@@ -108,7 +108,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		
 		If an empty variable is passed to the ByRef parameter strFileEncoding, returns the detected file encoding.
 
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 Out of memory / 2 Memory limit / 3 No unused character for replacement (returned by sub-function Prepare4Multilines) / 255 Unknown error. If the function produces an "Memory limit reached" error, increase the #MaxMem value (see the help file).
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 Out of memory / 2 Memory limit / 3 No unused character for replacement (returned by sub-function Prepare4Multilines) / 4 Reuse field syntax error / 255 Unknown error. If the function produces an "Memory limit reached" error, increase the #MaxMem value (see the help file).
 */
 {
 	objReuseDelimiters := StrSplit(strReuseDelimiters)
@@ -189,21 +189,29 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			}
 			strFieldNames := ""
 			for intIndex, strFieldName in objHeader ; returns the updated field names to the ByRef parameter
-				if StrLen(strReuseDelimiters) and InStr(strFieldName, objReuseDelimiters[1] . objReuseDelimiters[1]) ; we have to get the new field name
+				if (StrLen(strReuseDelimiters) and SubStr(strFieldName, 1, 2) = objReuseDelimiters[1] . objReuseDelimiters[1]) ; we have to get the new field name
 				{
-					ObjCSV_BuildReuseField(strReuseDelimiters, strFieldName, objRecordData, objHeader, strNewFieldName)
-					strFieldNames := strFieldNames . ObjCSV_Format4CSV(strNewFieldName, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
+					blnReuseError := ObjCSV_ReuseSpecsError(strReuseDelimiters, strFieldName)
+					if (blnReuseError)
+						strFieldNames := strFieldName ; return the wrong specs in strFieldNames (can be used for an error message)
+					else
+					{
+						ObjCSV_BuildReuseField(strReuseDelimiters, strFieldName, objRecordData, objHeader, strNewFieldName)
+						strFieldNames := strFieldNames . ObjCSV_Format4CSV(strNewFieldName, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
+					}
 				}
 				else
 					strFieldNames := strFieldNames . ObjCSV_Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
-			StringTrimRight, strFieldNames, strFieldNames, 1 ; remove extra field delimiter
 			if !(objHeader.MaxIndex()) ; we don't have an object, something went wrong
+				or (blnReuseError) ; we found a syntax error in reuse field
 			{
 				if (intProgressType)
 					ProgressStop(intProgressType)
-				ErrorLevel := 255 ; Unknown error
+				ErrorLevel := (blnReuseError ? 4 : 255) ; 4 Reuse field syntax error / 255 for Unknown error
 				return ; returns no object
 			}
+			else
+				StringTrimRight, strFieldNames, strFieldNames, 1 ; remove extra field delimiter
 		}
 		else
 		{
@@ -230,7 +238,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			{
 				strFieldHeader := objHeader[A_Index] ; header for this line
 				strFieldData := objLineArray[A_Index - intAddedFields] ; data for this line
-				if StrLen(strReuseDelimiters) and InStr(strFieldHeader, objReuseDelimiters[1] . objReuseDelimiters[1]) ; we have to build a reuse field
+				if (StrLen(strReuseDelimiters) and SubStr(strFieldHeader, 1, 2) = objReuseDelimiters[1] . objReuseDelimiters[1]) ; we have to build a reuse field
 				{
 					strFieldData := ObjCSV_BuildReuseField(strReuseDelimiters, strFieldHeader, objRecordData, objHeader, strNewFieldName)
 					strFieldHeader := strNewFieldName
@@ -283,7 +291,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		strReuseDelimiters - (Optional) See ObjCSV_CSV2Collection. Empty by default.
 
 	Returns:
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 Reuse field syntax error. For system errors, check A_LastError and google "windows system error codes".
 */
 {
 	objReuseDelimiters := StrSplit(strReuseDelimiters)
@@ -301,8 +309,16 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		strFieldOrder := "" ; build a new field order with reuse name replacing reuse specs
 		for intKey, strFieldHeader in objHeaderWithReuse
 		{
-			if InStr(strFieldHeader, objReuseDelimiters[1] . objReuseDelimiters[1]) ; this is reuse specs
+			if (SubStr(strFieldHeader, 1, 2) = objReuseDelimiters[1] . objReuseDelimiters[1]) ; this is reuse specs
 			{
+				blnReuseError := ObjCSV_ReuseSpecsError(strReuseDelimiters, strFieldHeader)
+				if (blnReuseError)
+				{
+					ErrorLevel := 2 ; Reuse field syntax error
+					if (intProgressType)
+						ProgressStop(intProgressType)
+					return
+				}
 				strReuseFieldName := GetReuseNewFieldName(strFieldHeader, strReuseDelimiters)
 				objReuseSpecs[strReuseFieldName] := strFieldHeader ; save specs for use with data lines
 				strFieldHeader := strReuseFieldName ; replace reuse specs with fiels name
@@ -397,7 +413,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		strEol - (Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use "`r`n" (carriage-return + line-feed, ASCII 13 & 10), "`n" (line-feed, ASCII 10) or "`r" (carriage-return, ASCII 13). If the parameter is empty, the content is searched to detect the first end-of-lines character(s) detected in the string (in the order "`r`n", "`n", "`r"). The first end-of-lines character(s) found is used for remaining fields and records. Empty by default.
 		strReuseDelimiters - (Optional) See ObjCSV_CSV2Collection. Empty by default.
 	Returns:
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google "windows system error codes".
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 Reuse field syntax error. For system errors, check A_LastError and google "windows system error codes".
 */
 {
 	objReuseDelimiters := StrSplit(strReuseDelimiters)
@@ -417,8 +433,16 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		strFieldOrder := "" ; rebuild with reuse fields name
 		for intColIndex, strFieldHeader in objHeaderWithReuse
 		{
-			if InStr(strFieldHeader, objReuseDelimiters[1] . objReuseDelimiters[1]) ; this is reuse specs
+			if (SubStr(strFieldHeader, 1, 2) = objReuseDelimiters[1] . objReuseDelimiters[1]) ; this is reuse specs
 			{
+				blnReuseError := ObjCSV_ReuseSpecsError(strReuseDelimiters, strFieldHeader)
+				if (blnReuseError)
+				{
+					ErrorLevel := 2 ; Reuse field syntax error
+					if (intProgressType)
+						ProgressStop(intProgressType)
+					return
+				}
 				strReuseFieldName := GetReuseNewFieldName(strFieldHeader, strReuseDelimiters)
 				objReuseSpecs[strReuseFieldName] := strFieldHeader ; save specs for use with data lines
 				strFieldHeader := strReuseFieldName ; replace reuse specs with field name
@@ -1095,7 +1119,7 @@ ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, By
 	
 	Parameters:
 		strReuseDelimiters - The first character of strReuseDelimiters delimits the begining of a reuse field or a section of the reuse field and the second character is the closing delimiter.
-		strReuseSpecs - String including the name and format of the reuse firlds and the name of the new field.
+		strReuseSpecs - String including the name and format of the reuse fields and the name of the new field.
 		objLine - Single array containing the values that can be reused
 		objHeader - Single array containing the headers of the values in objLine
 		strNewFieldName - (ByRef) Reuse field name
@@ -1124,6 +1148,42 @@ ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, By
 		if InStr(strReuseField, strReuseStart . strKey . strReuseEnd)
 			strReuseField := StrReplace(strReuseField, strReuseStart . strKey . strReuseEnd, objLine[strKey])
 	return strReuseField ; return field data
+}
+;================================================
+
+
+
+;================================================
+ObjCSV_ReuseSpecsError(strReuseDelimiters, strReuseSpecs)
+/*!
+	Function: ObjCSV_ReuseSpecsError
+		Validate the syntax of the reuse specs and return an error code or 0 if there is no error.
+	
+	Parameters:
+		strReuseDelimiters - The first character of strReuseDelimiters delimits the begining of a reuse field or a section of the reuse field and the second character is the closing delimiter.
+		strReuseSpecs - String including the two sections of a reuse fields: format and name of the new field.
+
+	Returns:
+		This function returns 0 (false) if there is no error. If there is an error, it returns:
+		-1 if the opening and closing delimiters in the reuse specs do not match;
+		2 if no section is found inside the reuse specs;
+		the number of number of sections (1, 3 or more) if a section is missing or if there are too many sections
+	
+	Remarks:
+		See ObjCSV_BuildReuseField for details about reuse specs.
+*/
+;================================================
+{
+	; call the recursive function to validate delimiters, starting at first character to validate the whole reuse specs
+	intEndFormat := FindClosingMatch(StrSplit(strReuseDelimiters), StrSplit(strReuseSpecs), 1, intSections)
+
+	if (StrLen(strReuseSpecs) <> intEndFormat) ; opening and closing delimiters in reuse specs do not match
+		return -1
+	if !(intSections) ; empty or 0, no section found in reuse specs
+		return 2
+	if (intSections <> 2) ; missing or too many sections
+		return intSections
+	; else return false
 }
 ;================================================
 
@@ -1400,6 +1460,34 @@ GetUnusedCharacter(str)
 		if !InStr(str, Chr(256 - A_Index))
 			return Chr(256 - A_Index)
 	; if whenever str contains all characters, return false!
+}
+
+
+
+FindClosingMatch(objReuseDelimiters, objReuseSpecs, intPos, ByRef intSections, intLevel := 1)
+; recursive function returning the position of the closing delimiter in objReuseSpecs corresponding to the opening delimiter at position intPos
+; it returns false if there is not corresponding closing delimiter
+; objReuseDelimiters contains opening and closing delimiters
+; intSections returns the number of sections found at intLevel 1 (a section is a pair of opening and closing delimiters of the same level), example: [[section 1][section 2]]
+{
+	if (intPos = 0)
+		return 0 ; error
+	Loop
+	{
+		intPos++
+		
+		if (objReuseSpecs[intPos] = objReuseDelimiters[1]) ; this is the beginning of a section
+		{
+			if (intLevel = 1) ; this is a first level section
+				intSections++
+			intPos := FindClosingMatch(objReuseDelimiters, objReuseSpecs, intPos, intSections, intLevel + 1) ; RECURSIVE
+		}
+		
+		else if (objReuseSpecs[intPos] = objReuseDelimiters[2]) ; this is the matching closing delimiter
+			return intPos
+		else if (intPos > objReuseSpecs.MaxIndex()) ; there is no matching parameter
+			return 0
+	}
 }
 
 
