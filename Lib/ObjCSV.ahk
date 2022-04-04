@@ -32,6 +32,7 @@ ObjCSVTest Combine Fields
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.5.14 BETA  2022-04-04 Rename functions, parameters and variables from "reuse" to "merge": ObjCSV_MergeSpecsError, ObjCSV_BuildMergeField. Remove unused parameter objHeader from ObjCSV_BuildMergeField.
 			0.5.13 BETA  2022-03-28 add function ObjCSV_ReuseSpecsError to validate reuse specs syntax, return ErrorLevel if error in
 			ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed, add row number parameter to ObjCSV_BuildReuseField for placeholder ROWNUMBER.  
 			0.5.12 BETA  2022-02-28 Simplify reuse specs; add function ObjCSV_BuildReuseField, reuse fields support to ObjCSV_Collection2CSV
@@ -88,7 +89,7 @@ ObjCSVTest Combine Fields
 
 ;================================================
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, intProgressType := 0
-	, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := "", strProgressText := "", ByRef strFileEncoding := "", strReuseDelimiters := "")
+	, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := "", strProgressText := "", ByRef strFileEncoding := "", strMergeDelimiters := "")
 /*!
 	Function: ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText := "", ByRef strFileEncoding := ""])
 		Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of
@@ -106,7 +107,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		strEolReplacement - (Optional) Character (or string) that will be converted to line-breaks if found in the CSV data fields. Replacements occur only when blnMultiline is True. Empty by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 		strFileEncoding - (ByRef, Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (nnnn being a code page numeric identifier - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm). Empty by default (using current encoding). If a literal value or a filled variable is passed as parameter, this value is used to set reading encoding. If an empty variable is passed to the ByRef parameter, the detected file encoding is returned in the ByRef variable.
-		strReuseDelimiters - (Optional) Characters used in strFieldNames allowing to copy or combine fields from the existing record in new fields. The first character delimits the begining of a reuse and the second character is the reuse closing delimiter. These delimiters are used for a whole reuse field and in two internal sections: for example with delimiters "[]", "[[format][name]]". The first internal section "[format]" specify the format of the new field with insertion field to reuse by specifying their name between reuse delimiters, for example "[[field3] ... [field1]]"; the second section "[name]" specify the name of the new field and is assumed to be unique in strFieldNames. For example: with a list including the fields "FirstName", "LastName" and "City", the format [[Name: [FirstName] [LastName] ([City])][Name and city]]" would reuse the three existing fields to create a new one named "Name and city": "Presley,Elvis,Memphis,Elvis Presley (Memphis)". Reused fields must appear in the fields list strFieldNames before they can be reused. If the reuse specs include strFieldDelimiter, this whole reuse field must be enclosed with strEncapsulator. Empty by default.
+		strMergeDelimiters - (Optional) Characters used in strFieldNames allowing to copy or combine fields from the existing record in new fields. The first character delimits the begining of a merge and the second character is the merge closing delimiter. These delimiters are used for a whole merge field and in two internal sections: for example with delimiters "[]", "[[format][name]]". The first internal section "[format]" specify the format of the new field with insertion of fields to merge by specifying their name between merge delimiters, for example "[[field3] ... [field1]]"; the second section "[name]" specify the name of the new field and is assumed to be unique in strFieldNames. For example: with a list including the fields "FirstName", "LastName" and "City", the format [[Name: [FirstName] [LastName] ([City])][Name and city]]" would merge the three existing fields to create a new one named "Name and city": "Presley,Elvis,Memphis,Elvis Presley (Memphis)". Fields included in a merge field must appear in strFieldNames before the merge field. If the merge specs include strFieldDelimiter, this whole merge field must be enclosed with strEncapsulator. Empty by default.
 
 	Returns:
 		This functions returns an object that contains an array of objects. This collection of objects can be viewed as a table in a database. Each object in the collection is like a record (or a line) in a table. These records are, in fact, associative arrays which contain a list key-value pairs. Key names are like field names (or column names) in the table. Key names are taken in the header of the CSV file, if it exists. Keys can be strings or integers, while values can be of any type that can be expressed as text. The records can be read using the syntax obj[1], obj[2] (...). Field values can be read using the syntax obj[1].keyname or, when field names contain spaces, obj[1]["key name"]. The "Loop, Parse" and "For key, value in array" commands allow to easily browse the content of these objects.
@@ -115,10 +116,10 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		
 		If an empty variable is passed to the ByRef parameter strFileEncoding, returns the detected file encoding.
 
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 Out of memory / 2 Memory limit / 3 No unused character for replacement (returned by sub-function Prepare4Multilines) / 4 Reuse field syntax error / 255 Unknown error. If the function produces an "Memory limit reached" error, increase the #MaxMem value (see the help file).
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 Out of memory / 2 Memory limit / 3 No unused character for replacement (returned by sub-function Prepare4Multilines) / 4 Merge field syntax error / 255 Unknown error. If the function produces an "Memory limit reached" error, increase the #MaxMem value (see the help file).
 */
 {
-	objReuseDelimiters := StrSplit(strReuseDelimiters)
+	objMergeDelimiters := StrSplit(strMergeDelimiters)
 	objCollection := Object() ; object that will be returned by the function (a collection or array of objects)
 	objHeader := Object() ; holds the keys (fields name) of the objects in the collection
 	if !StrLen(strFileEncoding) and IsByRef(strFileEncoding) ; an empty variable was passed to strFileEncoding, detect the encoding
@@ -181,7 +182,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		}
 		if (A_Index = 1) and (blnHeader) ; we have an header to read
 		{
-			objHeader := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, true, strReuseDelimiters)
+			objHeader := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, true, strMergeDelimiters)
 				; returns an object array from the first line of the delimited-separated-value file
 			strFieldNamesMatchList := strFieldDelimiter
 			Loop, % objHeader.MaxIndex() ; check if fields names are empty or duplicated
@@ -196,25 +197,25 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			}
 			strFieldNames := ""
 			for intIndex, strFieldName in objHeader ; returns the updated field names to the ByRef parameter
-				if (StrLen(strReuseDelimiters) and SubStr(strFieldName, 1, 2) = objReuseDelimiters[1] . objReuseDelimiters[1]) ; we have to get the new field name
+				if (StrLen(strMergeDelimiters) and SubStr(strFieldName, 1, 2) = objMergeDelimiters[1] . objMergeDelimiters[1]) ; we have to get the new field name
 				{
-					blnReuseError := ObjCSV_ReuseSpecsError(strReuseDelimiters, strFieldName)
-					if (blnReuseError)
+					blnMergeError := ObjCSV_MergeSpecsError(strMergeDelimiters, strFieldName)
+					if (blnMergeError)
 						strFieldNames := strFieldName ; return the wrong specs in strFieldNames (can be used for an error message)
 					else
 					{
-						ObjCSV_BuildReuseField(strReuseDelimiters, strFieldName, objRecordData, objHeader, 0, strNewFieldName) ; only to get ByRef strNewFieldName
+						ObjCSV_BuildMergeField(strMergeDelimiters, strFieldName, objRecordData, 0, strNewFieldName) ; only to get ByRef strNewFieldName
 						strFieldNames := strFieldNames . ObjCSV_Format4CSV(strNewFieldName, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
 					}
 				}
 				else
 					strFieldNames := strFieldNames . ObjCSV_Format4CSV(strFieldName, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
 			if !(objHeader.MaxIndex()) ; we don't have an object, something went wrong
-				or (blnReuseError) ; we found a syntax error in reuse field
+				or (blnMergeError) ; we found a syntax error in merge field
 			{
 				if (intProgressType)
 					ProgressStop(intProgressType)
-				ErrorLevel := (blnReuseError ? 4 : 255) ; 4 Reuse field syntax error / 255 for Unknown error
+				ErrorLevel := (blnMergeError ? 4 : 255) ; 4 Merge field syntax error / 255 for Unknown error
 				return ; returns no object
 			}
 			else
@@ -240,14 +241,14 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			objRecordData := Object() ; object of one record in the collection
 			objLineArray := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, false)
 				; returns an object array from this line of the delimited-separated-value file
-			intAddedFields := 0 ; count the number of reused fields to insert in the array
+			intAddedFields := 0 ; count the number of merged fields to insert in the array
 			loop, % objHeader.MaxIndex()
 			{
 				strFieldHeader := objHeader[A_Index] ; header for this line
 				strFieldData := objLineArray[A_Index - intAddedFields] ; data for this line
-				if (StrLen(strReuseDelimiters) and SubStr(strFieldHeader, 1, 2) = objReuseDelimiters[1] . objReuseDelimiters[1]) ; we have to build a reuse field
+				if (StrLen(strMergeDelimiters) and SubStr(strFieldHeader, 1, 2) = objMergeDelimiters[1] . objMergeDelimiters[1]) ; we have to build a merge field
 				{
-					strFieldData := ObjCSV_BuildReuseField(strReuseDelimiters, strFieldHeader, objRecordData, objHeader, objCollection.Length() + 1, strNewFieldName)
+					strFieldData := ObjCSV_BuildMergeField(strMergeDelimiters, strFieldHeader, objRecordData, objCollection.Length() + 1, strNewFieldName)
 					strFieldHeader := strNewFieldName
 					intAddedFields++
 				}
@@ -276,9 +277,9 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 ;================================================
 ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder := "", intProgressType := 0
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
-	, strProgressText := "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "", strReuseDelimiters := "")
+	, strProgressText := "", strFileEncoding := "", blnAlwaysEncapsulate := 0, strEol := "", strMergeDelimiters := "")
 /*!
-	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate] := 0, strEol := "", strReuseDelimiters := "")
+	Function: ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", blnAlwaysEncapsulate] := 0, strEol := "", strMergeDelimiters := "")
 		Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.
 
 	Parameters:
@@ -295,14 +296,14 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default (system default ANSI code page).
 		blnAlwaysEncapsulate - (Optional) If true (or 1), always encapsulate values with field encapsulator. If false (or 0), fields are encapsulated only if required (see strEncapsulator above). False (or 0) by default.
 		strEol - (Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use "`r`n" (carriage-return + line-feed, ASCII 13 & 10), "`n" (line-feed, ASCII 10) or "`r" (carriage-return, ASCII 13). If the parameter is empty, the content is searched to detect the first end-of-lines character(s) detected in the string (in the order "`r`n", "`n", "`r"). The first end-of-lines character(s) found is used for remaining fields and records. Empty by default.
-		strReuseDelimiters - (Optional) Opening and closing delimiters of reuse fields in strFieldOrder. See ObjCSV_CSV2Collection. Empty by default.
+		strMergeDelimiters - (Optional) Opening and closing delimiters of merge fields in strFieldOrder. See ObjCSV_CSV2Collection. Empty by default.
 
 	Returns:
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 Reuse field syntax error. For system errors, check A_LastError and google "windows system error codes".
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 Merge field syntax error. For system errors, check A_LastError and google "windows system error codes".
 */
 {
-	objReuseDelimiters := StrSplit(strReuseDelimiters)
-	objReuseSpecs := Object()
+	objMergeDelimiters := StrSplit(strMergeDelimiters)
+	objMergeSpecs := Object()
 	strData := ""
 	intMax := objCollection.MaxIndex()
 	if (intProgressType)
@@ -310,25 +311,25 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
-	if StrLen(strReuseDelimiters) ; we have to get reuse field name(s)
+	if StrLen(strMergeDelimiters) ; we have to get new field(s) name
 	{
-		objHeaderWithReuse := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator, true, strReuseDelimiters)
-		strFieldOrder := "" ; build a new field order with reuse name replacing reuse specs
-		for intKey, strFieldHeader in objHeaderWithReuse
+		objHeaderWithMerge := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator, true, strMergeDelimiters)
+		strFieldOrder := "" ; build a new field order with new merged fields name replacing merge specs
+		for intKey, strFieldHeader in objHeaderWithMerge
 		{
-			if (SubStr(strFieldHeader, 1, 2) = objReuseDelimiters[1] . objReuseDelimiters[1]) ; this is reuse specs
+			if (SubStr(strFieldHeader, 1, 2) = objMergeDelimiters[1] . objMergeDelimiters[1]) ; this is merge specs
 			{
-				blnReuseError := ObjCSV_ReuseSpecsError(strReuseDelimiters, strFieldHeader)
-				if (blnReuseError)
+				blnMergeError := ObjCSV_MergeSpecsError(strMergeDelimiters, strFieldHeader)
+				if (blnMergeError)
 				{
-					ErrorLevel := 2 ; Reuse field syntax error
+					ErrorLevel := 2 ; Merge field syntax error
 					if (intProgressType)
 						ProgressStop(intProgressType)
 					return
 				}
-				strReuseFieldName := GetReuseNewFieldName(strFieldHeader, strReuseDelimiters)
-				objReuseSpecs[strReuseFieldName] := strFieldHeader ; save specs for use with data lines
-				strFieldHeader := strReuseFieldName ; replace reuse specs with fiels name
+				strMergeFieldName := GetMergeNewFieldName(strFieldHeader, strMergeDelimiters)
+				objMergeSpecs[strMergeFieldName] := strFieldHeader ; save specs for use with data lines
+				strFieldHeader := strMergeFieldName ; replace merge specs with field name
 			}
 			strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldHeader, strFieldDelimiter, strEncapsulator, blnAlwaysEncapsulate) . strFieldDelimiter
 		}
@@ -368,8 +369,8 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 			intLineNumber := A_Index
 			for intColIndex, strFieldName in objHeader
 			{
-				if StrLen(strReuseDelimiters) and objReuseSpecs.HasKey(strFieldName) ; we have to build the new field name
-					strValue := ObjCSV_BuildReuseField(strReuseDelimiters, objReuseSpecs[strFieldName], objCollection[intLineNumber], objHeader, intLineNumber, strNewFieldName)
+				if StrLen(strMergeDelimiters) and objMergeSpecs.HasKey(strFieldName) ; we have to build the new field name
+					strValue := ObjCSV_BuildMergeField(strMergeDelimiters, objMergeSpecs[strFieldName], objCollection[intLineNumber], intLineNumber, strNewFieldName)
 				else
 					strValue := objCollection[intLineNumber][Trim(strFieldName)]
 				strValue := CheckEolReplacement(strValue, strEolReplacement, strEol)
@@ -399,7 +400,7 @@ ObjCSV_Collection2CSV(objCollection, strFilePath, blnHeader := 0, strFieldOrder 
 ;================================================
 ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, strFieldOrder := "", intProgressType := 0
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
-	, strProgressText := "", strFileEncoding := "", strEol := "", strReuseDelimiters := "")
+	, strProgressText := "", strFileEncoding := "", strEol := "", strMergeDelimiters := "")
 /*!
 	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", strEol := ""])
 		Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
@@ -418,13 +419,13 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 		strFileEncoding - (Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (a code page with numeric identifier nnn - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm)). Empty by default (system default ANSI code page).
 		strEol - (Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use "`r`n" (carriage-return + line-feed, ASCII 13 & 10), "`n" (line-feed, ASCII 10) or "`r" (carriage-return, ASCII 13). If the parameter is empty, the content is searched to detect the first end-of-lines character(s) detected in the string (in the order "`r`n", "`n", "`r"). The first end-of-lines character(s) found is used for remaining fields and records. Empty by default.
-		strReuseDelimiters - (Optional) Opening and closing delimiters of reuse fields in strFieldOrder. See ObjCSV_CSV2Collection. Empty by default.
+		strMergeDelimiters - (Optional) Opening and closing delimiters of merge fields in strFieldOrder. See ObjCSV_CSV2Collection. Empty by default.
 	Returns:
-		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 Reuse field syntax error. For system errors, check A_LastError and google "windows system error codes".
+		At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 Merge field syntax error. For system errors, check A_LastError and google "windows system error codes".
 */
 {
-	objReuseDelimiters := StrSplit(strReuseDelimiters)
-	objReuseSpecs := Object()
+	objMergeDelimiters := StrSplit(strMergeDelimiters)
+	objMergeSpecs := Object()
 	StringSplit, arrIntWidth, strWidth, %strFieldDelimiter%
 		; get width for each field in the pseudo-array arrIntWidth, so %arrIntWidth1% or arrIntWidth%intColIndex%
 	strData := "" ; string to save in the fixed-width file
@@ -434,25 +435,25 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 		intProgressBatchSize := ProgressBatchSize(intMax)
 		ProgressStart(intProgressType, intMax, strProgressText)
 	}
-	if StrLen(strReuseDelimiters) ; we have to get reuse field name(s)
+	if StrLen(strMergeDelimiters) ; we have to get merge field(s) name
 	{
-		objHeaderWithReuse := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator, true, strReuseDelimiters)
-		strFieldOrder := "" ; rebuild with reuse fields name
-		for intColIndex, strFieldHeader in objHeaderWithReuse
+		objHeaderWithMerge := ObjCSV_ReturnDSVObjectArray(strFieldOrder, strFieldDelimiter, strEncapsulator, true, strMergeDelimiters)
+		strFieldOrder := "" ; rebuild with merge fields name
+		for intColIndex, strFieldHeader in objHeaderWithMerge
 		{
-			if (SubStr(strFieldHeader, 1, 2) = objReuseDelimiters[1] . objReuseDelimiters[1]) ; this is reuse specs
+			if (SubStr(strFieldHeader, 1, 2) = objMergeDelimiters[1] . objMergeDelimiters[1]) ; this is merge specs
 			{
-				blnReuseError := ObjCSV_ReuseSpecsError(strReuseDelimiters, strFieldHeader)
-				if (blnReuseError)
+				blnMergeError := ObjCSV_MergeSpecsError(strMergeDelimiters, strFieldHeader)
+				if (blnMergeError)
 				{
-					ErrorLevel := 2 ; Reuse field syntax error
+					ErrorLevel := 2 ; Merge field syntax error
 					if (intProgressType)
 						ProgressStop(intProgressType)
 					return
 				}
-				strReuseFieldName := GetReuseNewFieldName(strFieldHeader, strReuseDelimiters)
-				objReuseSpecs[strReuseFieldName] := strFieldHeader ; save specs for use with data lines
-				strFieldHeader := strReuseFieldName ; replace reuse specs with field name
+				strMergeFieldName := GetMergeNewFieldName(strFieldHeader, strMergeDelimiters)
+				objMergeSpecs[strMergeFieldName] := strFieldHeader ; save specs for use with data lines
+				strFieldHeader := strMergeFieldName ; replace merge specs with field name
 			}
 			strHeaderFixed := strHeaderFixed . MakeFixedWidth(strFieldHeader, arrIntWidth%intColIndex%)
 			strFieldOrder := strFieldOrder . ObjCSV_Format4CSV(strFieldHeader, strFieldDelimiter, strEncapsulator) . strFieldDelimiter
@@ -506,8 +507,8 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 			for intColIndex, strFieldName in objHeader
 				; parse strFieldOrder handling encapsulated field names
 			{
-				if StrLen(strReuseDelimiters) and objReuseSpecs.HasKey(strFieldName) ; we have to build the new field name
-					strValue := ObjCSV_BuildReuseField(strReuseDelimiters, objReuseSpecs[strFieldName], objCollection[intLineNumber], objHeader, intLineNumber, strNewFieldName)
+				if StrLen(strMergeDelimiters) and objMergeSpecs.HasKey(strFieldName) ; we have to build the new field name
+					strValue := ObjCSV_BuildMergeField(strMergeDelimiters, objMergeSpecs[strFieldName], objCollection[intLineNumber], intLineNumber, strNewFieldName)
 				else
 					strValue := CheckEolReplacement(objCollection[intLineNumber][Trim(strFieldName)], strEolReplacement, strEol)
 				strRecord := strRecord . MakeFixedWidth(strValue, arrIntWidth%intColIndex%)
@@ -1037,7 +1038,7 @@ ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """", bln
 
 
 ;================================================
-ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsulator := """", blnTrim := true, strReuseDelimiters := "")
+ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsulator := """", blnTrim := true, strMergeDelimiters := "")
 /*!
 	Function: ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter = ",", strEncapsulator = """", blnTrim := true)
 		Returns an object array from a delimiter-separated string.
@@ -1047,7 +1048,7 @@ ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsula
 		strDelimiter - (Optional) Field strDelimiter. One character, usually comma (default value) or tab.
 		strEncapsulator - (Optional) Character (usualy double-quote) used in the CSV file to embed fields that include at least one of these special characters: line-breaks, field strDelimiters or the strEncapsulator character itself. In this last case, the strEncapsulator character must be doubled in the string. For example: "one ""quoted"" word". Double-quote by default.
 		blnTrim - Remove extra spaces at beginning and end of array item. True by default for backward compatibility.
-		strReuseDelimiters - (Optional) Opening and closing delimiters of reuse fields in strCurrentDSVLine. See ObjCSV_CSV2Collection. Empty by default.
+		strMergeDelimiters - (Optional) Opening and closing delimiters of merge fields in strCurrentDSVLine. See ObjCSV_CSV2Collection. Empty by default.
 
 	Returns:
 		Returns an object array from a strDelimiter-separated string.
@@ -1059,13 +1060,13 @@ ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsula
 		See strDelimiter Seperated Values by DerRaphael ([http://www.autohotkey.com/forum/post-203280.html#203280](http://www.autohotkey.com/forum/post-203280.html#203280)).
 */
 {
-	if StrLen(strReuseDelimiters)
+	if StrLen(strMergeDelimiters)
 	{
-		objReuseDelimiters := StrSplit(strReuseDelimiters)
+		objMergeDelimiters := StrSplit(strMergeDelimiters)
 		
 		; temporary delimiter  character replacement in order to avoid splitting the resuse header
 		strTempDelimiterReplacement := GetUnusedCharacter(strCurrentDSVLine)
-		strCurrentDSVLine := ReplaceBetween(strCurrentDSVLine, objReuseDelimiters[1] . objReuseDelimiters[1], objReuseDelimiters[2] . objReuseDelimiters[2], strDelimiter, strTempDelimiterReplacement)
+		strCurrentDSVLine := ReplaceBetween(strCurrentDSVLine, objMergeDelimiters[1] . objMergeDelimiters[1], objMergeDelimiters[2] . objMergeDelimiters[2], strDelimiter, strTempDelimiterReplacement)
 		; restore original delimiter when populating the object later
 	}
 	objReturnObject := Object()             ; create a local object array that will be returned by the function
@@ -1091,8 +1092,8 @@ ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsula
 		; p1 contains now the position of our current delimitor in a 1-based index
 		fieldCount++                        ; add count
 		field := SubStr(strCurrentDSVLine,p0,p1-p0)
-		; if we have a reuse field header, restore original field delimiter inside reuse header
-		if StrLen(strReuseDelimiters) and InStr(field, strTempDelimiterReplacement)
+		; if we have a merge field header, restore original field delimiter inside merge field header
+		if StrLen(strMergeDelimiters) and InStr(field, strTempDelimiterReplacement)
 			field := StrReplace(field, strTempDelimiterReplacement, strDelimiter)
 		; This is the Line you'll have to change if you want different treatment
 		; otherwise your resulting fields from the DSV data Line will be stored in an object array
@@ -1119,75 +1120,72 @@ ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsula
 
 
 ;================================================
-ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, intRowNumber, ByRef strNewFieldName)
+ObjCSV_BuildMergeField(strMergeDelimiters, strMergeSpecs, objLine, intRowNumber, ByRef strNewFieldName)
 /*!
-	Function: ObjCSV_BuildReuseField(strReuseDelimiters, strReuseSpecs, objLine, objHeader, ByRef strNewFieldName)
+	Function: ObjCSV_BuildMergeField(strMergeDelimiters, strMergeSpecs, objLine, objHeader, ByRef strNewFieldName)
 		Returns the content of a field copying or combining fields from the existing record from objLine in new field.
 	
 	Parameters:
-		strReuseDelimiters - The first character of strReuseDelimiters delimits the begining of a reuse field or a section of the reuse field and the second character is the closing delimiter.
-		strReuseSpecs - String including the name and format of the reuse fields and the name of the new field.
-		objLine - Single array containing the values that can be reused
-		objHeader - Single array containing the headers of the values in objLine
+		strMergeDelimiters - The first character of strMergeDelimiters delimits the begining of a merge field or a section of the merge field and the second character is the closing delimiter.
+		strMergeSpecs - String including the name and format of the merge field and the name of the new field.
+		objLine - Single array containing the values that can be merged
 		intRowNumber - Integer value, current line number (used to replace ROWNUMBER placeholder)
-		strNewFieldName - (ByRef) Reuse field name
+		strNewFieldName - (ByRef) New merged field name
 
 	Returns:
-		This function returns the new field in a string. The ByRef parameter strNewFieldName returns the name of the new field.
+		This function returns the new field data in a string. The ByRef parameter strNewFieldName returns the name of the new field.
 	
 	Remarks:
-		The delimiters are used for a whole reuse field and in two internal sections: for example with delimiters "[]", "[[format][name]]".
-		1) The first internal section "[format]" specify the format of the new field with insertion field to reuse by specifying their name between reuse delimiters, for example "[[field3] ... [field1]]". This section may also include the ROPWNUMBER placeholder, for example "#[ROWNUMBER]")
-		2) The second section "[name]" specify the name of the new field.
-		Reused fields must appear in objHeader before they can be reused.
-		If the reuse specs include strFieldDelimiter, this whole reuse field must be enclosed with strEncapsulator.
+		The delimiters are used for a whole merge field and in two internal sections: for example with delimiters "[]", "[[format][name]]".
+		1) The first internal section "[format]" specify the format of the new field with insertion of merged fields by specifying their name between merge delimiters, for example "[[field3] ... [field1]]". This section may also include the ROPWNUMBER placeholder, for example "#[ROWNUMBER]")
+		2) The second section "[name]" specify the name of the new field, assumed to be unique in objLine.
+		Fields included in a merged field must appear in objLine.
+		If the merge specs include strFieldDelimiter, the whole reuse field must be enclosed with strEncapsulator.
 		For example: "[Name: [FirstName] [LastName] ([City])][Name and city]" would reuse the three existing fields (for example "Presley,Elvis,Memphis") to create a new field named "Name and city" containing "Elvis Presley (Memphis)".
-		Reused fields must appear in strReuseSpecs and objLine before the reuse field that uses them.
-		Because it includes strFieldDelimiter, the whole reuse field header must be enclosed with strEncapsulator.
 */
 {
-	strReuseStart := SubStr(strReuseDelimiters, 1, 1)
-	strReuseEnd := SubStr(strReuseDelimiters, 2, 1)
-	strReuseField := SubStr(strReuseSpecs, 3, InStr(strReuseSpecs, strReuseStart, , 0) - 4)
-		; get reuse field format (with placeholders to be replaced with data from objLine
-	strNewFieldName := GetReuseNewFieldName(strReuseSpecs, strReuseDelimiters)
-		; get the reuse field name (returned ByRef to caller)
+	strMergeStart := SubStr(strMergeDelimiters, 1, 1)
+	strMergeEnd := SubStr(strMergeDelimiters, 2, 1)
+	strMergeField := SubStr(strMergeSpecs, 3, InStr(strMergeSpecs, strMergeStart, , 0) - 4)
+		; get merge field format (with placeholders to be replaced with data from objLine
+	strNewFieldName := GetMergeNewFieldName(strMergeSpecs, strMergeDelimiters)
+		; get the new field name (returned ByRef to caller)
 	for strKey, strData in objLine
-		if InStr(strReuseField, strReuseStart . strKey . strReuseEnd)
-			strReuseField := StrReplace(strReuseField, strReuseStart . strKey . strReuseEnd, objLine[strKey])
-	strReuseField := StrReplace(strReuseField, strReuseStart . "ROWNUMBER" . strReuseEnd, intRowNumber)
-	return strReuseField ; return field data
+		if InStr(strMergeField, strMergeStart . strKey . strMergeEnd)
+			strMergeField := StrReplace(strMergeField, strMergeStart . strKey . strMergeEnd, objLine[strKey])
+	strMergeField := StrReplace(strMergeField, strMergeStart . "ROWNUMBER" . strMergeEnd, intRowNumber)
+	return strMergeField ; return field data
 }
 ;================================================
 
 
 
 ;================================================
-ObjCSV_ReuseSpecsError(strReuseDelimiters, strReuseSpecs)
+ObjCSV_MergeSpecsError(strMergeDelimiters, strMergeSpecs)
 /*!
-	Function: ObjCSV_ReuseSpecsError(strReuseDelimiters, strReuseSpecs)
-		Validate the syntax of the reuse specs and return an error code or 0 if there is no error.
+	Function: ObjCSV_MergeSpecsError(strMergeDelimiters, strMergeSpecs)
+		Validate the syntax of the merge specs and return an error code or 0 if there is no error.
 	
 	Parameters:
-		strReuseDelimiters - The first character of strReuseDelimiters delimits the begining of a reuse field or a section of the reuse field and the second character is the closing delimiter.
-		strReuseSpecs - String including the two sections of a reuse fields: format and name of the new field.
+		strMergeDelimiters - The first character of strMergeDelimiters delimits the begining of a merge field or a section of the merge field and the second character is the closing delimiter.
+		strMergeSpecs - String including the two sections of a merge fields: format and name of the new field.
 
 	Returns:
 		This function returns 0 (false) if there is no error. If there is an error, it returns:
-		-1 if the opening and closing delimiters in the reuse specs do not match;
-		2 if no section is found inside the reuse specs;
+		-1 if the opening and closing delimiters in the merge specs do not match;
+		2 if no section is found inside the merge specs;
 		the number of number of sections (1, 3 or more) if a section is missing or if there are too many sections
 	
 	Remarks:
-		See ObjCSV_BuildReuseField for details about reuse specs.
+		See ObjCSV_BuildMergeField for details about merge specs.
 */
 ;================================================
 {
-	; call the recursive function to validate delimiters, starting at first character to validate the whole reuse specs
-	intEndFormat := FindClosingMatch(StrSplit(strReuseDelimiters), StrSplit(strReuseSpecs), 1, intSections)
-	if (StrLen(strReuseSpecs) <> intEndFormat) ; opening and closing delimiters in reuse specs do not match
+	; call the recursive function to validate delimiters, starting at first character to validate the whole merge specs
+	intEndFormat := FindClosingMatch(StrSplit(strMergeDelimiters), StrSplit(strMergeSpecs), 1, intSections)
+	if (StrLen(strMergeSpecs) <> intEndFormat) ; opening and closing delimiters in merge specs do not match
 		return -1
-	if !(intSections) ; empty or 0, no section found in reuse specs
+	if !(intSections) ; empty or 0, no section found in merge specs
 		return 2
 	if (intSections <> 2) ; missing or too many sections
 		return intSections
@@ -1441,11 +1439,11 @@ GetEolCharacters(strData)
 
 
 
-GetReuseNewFieldName(strReuseSpecs, strReuseDelimiters)
-; extract the new field name from a reuse field in the last section of its header
+GetMergeNewFieldName(strMergeSpecs, strMergeDelimiters)
+; extract the new field name from a merge field in the last section of its header
 ; for example, return "name" for specs "[[format][name]]" with delimiters "[]"
 {
-	strFieldName := SubStr(strReuseSpecs, InStr(strReuseSpecs, StrSplit(strReuseDelimiters)[1], , 0) + 1) ; 0 to start from end
+	strFieldName := SubStr(strMergeSpecs, InStr(strMergeSpecs, StrSplit(strMergeDelimiters)[1], , 0) + 1) ; 0 to start from end
 	return SubStr(strFieldName, 1, -2)
 }
 
@@ -1472,10 +1470,10 @@ GetUnusedCharacter(str)
 
 
 
-FindClosingMatch(objReuseDelimiters, objReuseSpecs, intPos, ByRef intSections, intLevel := 1)
-; recursive function returning the position of the closing delimiter in objReuseSpecs corresponding to the opening delimiter at position intPos
+FindClosingMatch(objMergeDelimiters, objMergeSpecs, intPos, ByRef intSections, intLevel := 1)
+; recursive function returning the position of the closing delimiter in objMergeSpecs corresponding to the opening delimiter at position intPos
 ; it returns false if there is not corresponding closing delimiter
-; objReuseDelimiters contains opening and closing delimiters
+; objMergeDelimiters contains opening and closing delimiters
 ; intSections returns the number of sections found at intLevel 1 (a section is a pair of opening and closing delimiters of the same level), example: [[section 1][section 2]]
 {
 	if (intPos = 0)
@@ -1483,15 +1481,15 @@ FindClosingMatch(objReuseDelimiters, objReuseSpecs, intPos, ByRef intSections, i
 	Loop
 	{
 		intPos++
-		if (objReuseSpecs[intPos] = objReuseDelimiters[1]) ; this is the beginning of a section
+		if (objMergeSpecs[intPos] = objMergeDelimiters[1]) ; this is the beginning of a section
 		{
 			if (intLevel = 1) ; this is a first level section
 				intSections++
-			intPos := FindClosingMatch(objReuseDelimiters, objReuseSpecs, intPos, intSections, intLevel + 1) ; RECURSIVE
+			intPos := FindClosingMatch(objMergeDelimiters, objMergeSpecs, intPos, intSections, intLevel + 1) ; RECURSIVE
 		}
-		else if (objReuseSpecs[intPos] = objReuseDelimiters[2]) ; this is the matching closing delimiter
+		else if (objMergeSpecs[intPos] = objMergeDelimiters[2]) ; this is the matching closing delimiter
 			return intPos
-		else if (intPos > objReuseSpecs.MaxIndex()) ; there is no matching parameter
+		else if (intPos > objMergeSpecs.MaxIndex()) ; there is no matching parameter
 			return 0
 	}
 }
