@@ -32,6 +32,7 @@ ObjCSVTest Combine Fields
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
+			0.5.15 BETA  2022-04-15 Support merged field when passing merge specs in strFieldNames instead of the file header
 			0.5.14 BETA  2022-04-04 Rename functions, parameters and variables from "reuse" to "merge": ObjCSV_MergeSpecsError, ObjCSV_BuildMergeField. Remove unused parameter objHeader from ObjCSV_BuildMergeField.
 			0.5.13 BETA  2022-03-28 add function ObjCSV_ReuseSpecsError to validate reuse specs syntax, return ErrorLevel if error in
 			ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed, add row number parameter to ObjCSV_BuildReuseField for placeholder ROWNUMBER.  
@@ -83,7 +84,7 @@ ObjCSVTest Combine Fields
 			0.1.1  2013-08-26  First release  
 
 	Author: By Jean Lalonde
-	Version BETA: v0.5.13 (2022-03-28)
+	Version BETA: v0.5.15 (2022-03-28)
 */
 
 
@@ -98,7 +99,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 
 	Parameters:
 		strFilePath - Path of the file to load, which is assumed to be in A_WorkingDir if an absolute path isn't specified.
-		strFieldNames - (ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). If names are not provided and blnHeader is false, "C" + column numbers are used as object keys, starting at 1, and strFieldNames will return the "C" names. Empty by default. Output: See "Returns:" below.
+		strFieldNames - (ByRef) Input: Names for object keys if blnHeader if false. Names must appear in the same order as they appear in the file, separated by the strFieldDelimiter character (see below). Can include merge specs as describe in strMergeDelimiters (see below). If names are not provided and blnHeader is false, "C" + column numbers are used as object keys, starting at 1, and strFieldNames will return the "C" names. Empty by default. Output: See "Returns:" below.
 		blnHeader - (Optional) If true (or 1), the objects key names are taken from the header of the CSV file (first line of the file). If blnHeader if false (or 0), the first line is considered as data (see strFieldNames). True (or 1) by default.
 		blnMultiline - (Optional) If true (or 1), multi-line fields are supported. Multi-line fields include line breaks (end-of-line characters) which are usualy considered as delimiters for records (lines of data). Multi-line fields must be enclosed by the strEncapsulator character (usualy double-quote, see below). True by default. NOTE-1: If you know that your CSV file does NOT include multi-line fields, turn this option to false (or 0) to allow handling of larger files and improve performance (RegEx experts, help needed! See the function code for details). NOTE-2: If blnMultiline is True, you can use the strEolReplacement parameter to specify a character (or string) that will be converted to line-breaks if found in the CSV data fields.
 		intProgressType - (Optional) If 1, a progress bar is displayed. If -1, -2 or -n, the part "n" of the status bar is updated with the progress in percentage. See also strProgressText below. By default, no progress bar or status (0).
@@ -107,7 +108,7 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 		strEolReplacement - (Optional) Character (or string) that will be converted to line-breaks if found in the CSV data fields. Replacements occur only when blnMultiline is True. Empty by default.
 		strProgressText - (Optional) Text to display in the progress bar or in the status bar. For status bar progress, the string "##" is replaced with the percentage of progress. See also intProgressType above. Empty by default.
 		strFileEncoding - (ByRef, Optional) File encoding: ANSI, UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (nnnn being a code page numeric identifier - see [https://autohotkey.com/docs/commands/FileEncoding.htm](https://autohotkey.com/docs/commands/FileEncoding.htm). Empty by default (using current encoding). If a literal value or a filled variable is passed as parameter, this value is used to set reading encoding. If an empty variable is passed to the ByRef parameter, the detected file encoding is returned in the ByRef variable.
-		strMergeDelimiters - (Optional) Characters used in strFieldNames allowing to copy or combine fields from the existing record in new fields. The first character delimits the begining of a merge and the second character is the merge closing delimiter. These delimiters are used for a whole merge field and in two internal sections: for example with delimiters "[]", "[[format][name]]". The first internal section "[format]" specify the format of the new field with insertion of fields to merge by specifying their name between merge delimiters, for example "[[field3] ... [field1]]"; the second section "[name]" specify the name of the new field and is assumed to be unique in strFieldNames. For example: with a list including the fields "FirstName", "LastName" and "City", the format [[Name: [FirstName] [LastName] ([City])][Name and city]]" would merge the three existing fields to create a new one named "Name and city": "Presley,Elvis,Memphis,Elvis Presley (Memphis)". Fields included in a merge field must appear in strFieldNames before the merge field. If the merge specs include strFieldDelimiter, this whole merge field must be enclosed with strEncapsulator. Empty by default.
+		strMergeDelimiters - (Optional) Characters used in file header or strFieldNames allowing to copy or combine fields from the existing record in new fields. The first character delimits the begining of a merge and the second character is the merge closing delimiter. These delimiters are used for a whole merge field and in two internal sections: for example with delimiters "[]", "[[format][name]]". The first internal section "[format]" specify the format of the new field with insertion of fields to merge by specifying their name between merge delimiters, for example "[[field3] ... [field1]]"; the second section "[name]" specify the name of the new field and is assumed to be unique in strFieldNames. For example: with a list including the fields "FirstName", "LastName" and "City", the format [[Name: [FirstName] [LastName] ([City])][Name and city]]" would merge the three existing fields to create a new one named "Name and city": "Presley,Elvis,Memphis,Elvis Presley (Memphis)". Fields included in a merge field must appear in strFieldNames before the merge field. If the merge specs include strFieldDelimiter, this whole merge field must be enclosed with strEncapsulator. Empty by default.
 
 	Returns:
 		This functions returns an object that contains an array of objects. This collection of objects can be viewed as a table in a database. Each object in the collection is like a record (or a line) in a table. These records are, in fact, associative arrays which contain a list key-value pairs. Key names are like field names (or column names) in the table. Key names are taken in the header of the CSV file, if it exists. Keys can be strings or integers, while values can be of any type that can be expressed as text. The records can be read using the syntax obj[1], obj[2] (...). Field values can be read using the syntax obj[1].keyname or, when field names contain spaces, obj[1]["key name"]. The "Loop, Parse" and "For key, value in array" commands allow to easily browse the content of these objects.
@@ -180,22 +181,39 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 				; update progress bar only every %intProgressBatchSize% records
 			intProgressThisBatch := 0
 		}
-		if (A_Index = 1) and (blnHeader) ; we have an header to read
+		if (A_Index = 1)
 		{
-			objHeader := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, true, strMergeDelimiters)
-				; returns an object array from the first line of the delimited-separated-value file
-			strFieldNamesMatchList := strFieldDelimiter
-			Loop, % objHeader.MaxIndex() ; check if fields names are empty or duplicated
+			if (blnHeader) ; we have an header to read
 			{
-				if !StrLen(objHeader[A_Index]) ; field name is empty
-					objHeader[A_Index] := "Empty_" . A_Index ; use field number as field name
-				else
-					if InStr(strFieldNamesMatchList, strFieldDelimiter . objHeader[A_Index] . strFieldDelimiter)
-						; field name is duplicate
-						objHeader[A_Index] := objHeader[A_Index] . "_" . A_Index ; add field number to field name
-				strFieldNamesMatchList := strFieldNamesMatchList . objHeader[A_Index] . strFieldDelimiter
+				objHeader := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, true, strMergeDelimiters)
+					; returns an object array from the first line of the delimited-separated-value file
+				strFieldNamesMatchList := strFieldDelimiter
+				Loop, % objHeader.MaxIndex() ; check if fields names are empty or duplicated
+				{
+					if !StrLen(objHeader[A_Index]) ; field name is empty
+						objHeader[A_Index] := "Empty_" . A_Index ; use field number as field name
+					else
+						if InStr(strFieldNamesMatchList, strFieldDelimiter . objHeader[A_Index] . strFieldDelimiter)
+							; field name is duplicate
+							objHeader[A_Index] := objHeader[A_Index] . "_" . A_Index ; add field number to field name
+					strFieldNamesMatchList := strFieldNamesMatchList . objHeader[A_Index] . strFieldDelimiter
+				}
 			}
-			strFieldNames := ""
+			else ; there is no header in the CSV file
+			{
+				if !StrLen(strFieldNames)
+					; We must build the header
+				{
+					for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, false)
+						strFieldNames := strFieldNames . (StrLen(strFieldNames) ? strFieldDelimiter : "") . "C" . A_Index
+							; build strFieldNames to use as header and to return to caller
+					objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
+				}
+				; We have values in strFieldNames. Get field names from strFieldNames.
+				objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
+					; returns an object array from the delimited-separated-value strFieldNames string
+			}
+			strFieldNames := "" ; rebuild field names to be returned ByRef
 			for intIndex, strFieldName in objHeader ; returns the updated field names to the ByRef parameter
 				if (StrLen(strMergeDelimiters) and SubStr(strFieldName, 1, 2) = objMergeDelimiters[1] . objMergeDelimiters[1]) ; we have to get the new field name
 				{
@@ -221,23 +239,8 @@ ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMulti
 			else
 				StringTrimRight, strFieldNames, strFieldNames, 1 ; remove extra field delimiter
 		}
-		else
+		if (A_Index > 1 or !blnHeader) ; first data line with or without header
 		{
-			if (A_Index = 1)
-			{
-				; If we get here, bnHeader is false so there is no header in the CSV file
-				if !StrLen(strFieldNames)
-					; We must build the header
-				{
-					for intIndex, strFieldData in ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, false)
-						strFieldNames := strFieldNames . (StrLen(strFieldNames) ? strFieldDelimiter : "") . "C" . A_Index
-							; build strFieldNames to use as header and to return to caller
-					objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
-				}
-				; We have values in strFieldNames. Get field names from strFieldNames.
-				objHeader := ObjCSV_ReturnDSVObjectArray(strFieldNames, strFieldDelimiter, strEncapsulator)
-					; returns an object array from the delimited-separated-value strFieldNames string
-			}
 			objRecordData := Object() ; object of one record in the collection
 			objLineArray := ObjCSV_ReturnDSVObjectArray(A_LoopField, strFieldDelimiter, strEncapsulator, false)
 				; returns an object array from this line of the delimited-separated-value file
