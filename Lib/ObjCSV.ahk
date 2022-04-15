@@ -1,7 +1,3 @@
-;===============================================
-/*
-ObjCSVTest Combine Fields
-*/
 /*!
 	Library: ObjCSV Library
 		AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
@@ -83,8 +79,8 @@ ObjCSVTest Combine Fields
 			0.1.2  2013-09-05  Standardize boolean parameters to 0/1 (not True/False) and without double-quotes  
 			0.1.1  2013-08-26  First release  
 
-	Author: By Jean Lalonde
-	Version BETA: v0.5.15 (2022-03-28)
+	Author: Jean Lalonde
+	Version: v0.5.15 BETA (2022-04-15)
 */
 
 
