@@ -11,7 +11,7 @@
 <h1>ObjCSV_ReturnDSVObjectArray()</h1>
 <p>Returns an object array from a delimiter-separated string.</p>
 
-<pre class="Syntax">ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;)</pre>
+<pre class="Syntax">ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine [, strDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, blnTrim := true, strMergeDelimiters := &quot;&quot;])</pre>
 <h3>Parameters</h4>
 <table class="info">
 <tr>
@@ -29,6 +29,10 @@
 <tr>
   <td width="15%">blnTrim</td>
   <td width="85%">Remove extra spaces at beginning and end of array item. True by default for backward compatibility.</td>
+</tr>
+<tr>
+  <td width="15%">strMergeDelimiters</td>
+  <td width="85%">(Optional) Opening and closing delimiters of merge fields in strCurrentDSVLine. See ObjCSV_CSV2Collection. Empty by default.</td>
 </tr>
 </table>
 <h3>Returns</h3>

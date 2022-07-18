@@ -11,7 +11,7 @@
 <h1>ObjCSV_Collection2CSV()</h1>
 <p>Transfer the selected fields from a collection of objects to a CSV file. Field names taken from key names are optionally included in the CSV file. Delimiters are configurable.</p>
 
-<pre class="Syntax">ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = &quot;&quot;, intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strEolReplacement = &quot;&quot;, strProgressText = &quot;&quot;, strFileEncoding := &quot;&quot;, blnAlwaysEncapsulate] := 0, strEol := &quot;&quot;)</pre>
+<pre class="Syntax">ObjCSV_Collection2CSV(objCollection, strFilePath [, blnHeader = 0, strFieldOrder = &quot;&quot;, intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = &quot;,&quot;, strEncapsulator = &quot;&quot;&quot;&quot;, strEolReplacement = &quot;&quot;, strProgressText = &quot;&quot;, strFileEncoding := &quot;&quot;, blnAlwaysEncapsulate] := 0, strEol := &quot;&quot;, strMergeDelimiters := &quot;&quot;)</pre>
 <h3>Parameters</h4>
 <table class="info">
 <tr>
@@ -66,9 +66,13 @@
   <td width="15%">strEol</td>
   <td width="85%">(Optional) If strEolReplacement is used, character(s) that mark end-of-lines in multi-line fields. Use &quot;<code>r</code>n&quot; (carriage-return + line-feed, ASCII 13 &amp; 10), &quot;<code>n&quot; (line-feed, ASCII 10) or &quot;</code>r&quot; (carriage-return, ASCII 13). If the parameter is empty, the content is searched to detect the first end-of-lines character(s) detected in the string (in the order &quot;<code>r</code>n&quot;, &quot;<code>n&quot;, &quot;</code>r&quot;). The first end-of-lines character(s) found is used for remaining fields and records. Empty by default.</td>
 </tr>
+<tr>
+  <td width="15%">strMergeDelimiters</td>
+  <td width="85%">(Optional) Opening and closing delimiters of merge fields in strFieldOrder. See ObjCSV_CSV2Collection. Empty by default.</td>
+</tr>
 </table>
 <h3>Returns</h3>
-<p>At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error. For system errors, check A_LastError and google &quot;windows system error codes&quot;.</p>
+<p>At the end of execution, the function sets ErrorLevel to: 0 No error / 1 File system error / 2 Merge field syntax error. For system errors, check A_LastError and google &quot;windows system error codes&quot;.</p>
 
 </body>
 </html>

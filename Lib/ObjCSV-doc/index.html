@@ -8,24 +8,26 @@
 </head>
 <body>
 
-<h1>ObjCSV Library - Version v0.5.9 (2017-07-20) - by By Jean Lalonde</h1>
-<p>AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
+<h1>ObjCSV Library - Version v1.0.00 (2022-07-18) - by Jean Lalonde</h1>
+<p>AutoHotkey v1.1 (AHK) functions to load from CSV files, sort, display and save collections of records using the
 Object data type.<br/></p>
 <ul>
 <li>Read and save files in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.).</li>
+<li>Merge existing fields in a new field</li>
 <li>Display, edit and read Collections in GUI ListView objects.</li>
 <li>Export Collection to fixed-width, HTML or XML files.</li>
 </ul>
 <p>For more info on CSV files, see
 <a href="http://en.wikipedia.org/wiki/Comma-separated_values">http://en.wikipedia.org/wiki/Comma-separated_values</a>.<br/></p>
 <p>Written by Jean Lalonde (<a href="http://www.autohotkey.com/board/user/4880-jnllnd/">JnLlnd</a> on AHK forum) using
-AutoHotkey_L v1.1.09.03+ (<a href="http://l.autohotkey.net/">http://l.autohotkey.net/</a>)<br/></p>
+AutoHotkey_L v1.1+ (<a href="http://www.autohotkey.com/">http://www.autohotkey.com/</a>)<br/></p>
 <h3 id="online-material">ONLINE MATERIAL</h3>
 <ul>
 <li><a href="https://github.com/JnLlnd/ObjCSV">Home of this library is on GitHub</a></li>
 <li><a href="https://raw.github.com/JnLlnd/ObjCSV/master/Lib/ObjCSV.ahk">The most up-to-date version of this AHK file on GitHub</a></li>
 <li><a href="http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/">Online ObjCSV Library Help</a></li>
-<li><a href="http://www.autohotkey.com/board/topic/96618-lib-objcsv-library-v01-library-to-load-and-save-csv-files-tofrom-objects-and-listview/">Topic about this library on AutoHotkey forum</a></li>
+<li><a href="https://www.autohotkey.com/boards/viewtopic.php?t=41">Topic about this library on AutoHotkey forum</a></li>
+<li><a href="https://github.com/JnLlnd/CSVBuddy">Example of an application using ObjCSV: CSV Buddy</a></li>
 </ul>
 <h3 id="instructions">INSTRUCTIONS</h3>
 <p>Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:</p>
@@ -36,9 +38,26 @@ AutoHotkey_L v1.1.09.03+ (<a href="http://l.autohotkey.net/">http://l.autohotkey
 </ul>
 <p>You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)</p>
 <h3 id="versions-history">VERSIONS HISTORY</h3>
-<p>0.5.9  2017-07-20 In ObjCSV_CSV2Collection, reverse change in v0.4.1 to import non-standard CSV files created by XL causing issue (stripping &quot;=&quot;) in encapsulated fields with containing &quot;...=&quot;&quot;...&quot;<br/>
+<p>1.0.00 2022-07-18  (summary of changes in beta v0.5.10 to v0.5.15) New function ObjCSV_BuildMergeField allowing to copy
+or combine existing fields in a new field; new function ObjCSV_MergeSpecsError to validate merge specs syntax;
+merge fields support in ObjCSV_Collection2CSV, ObjCSV_CSV2Collection and ObjCSV_ReturnDSVObjectArray;
+support merged specs in file header and in strFieldNames. Note: changes in v1.0.00 are backward compatible.<br/>
+0.5.15 BETA  2022-04-15 Support merged field when passing merge specs in strFieldNames instead of the file header.<br/>
+0.5.14 BETA  2022-04-04 Rename functions, parameters and variables from &quot;reuse&quot; to &quot;merge&quot;: ObjCSV_MergeSpecsError,
+ObjCSV_BuildMergeField. Remove unused parameter objHeader from ObjCSV_BuildMergeField.<br/>
+0.5.13 BETA  2022-03-28 Add function ObjCSV_ReuseSpecsError to validate reuse specs syntax, return ErrorLevel if error in
+ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed, add row number parameter to ObjCSV_BuildReuseField for placeholder ROWNUMBER.<br/>
+0.5.12 BETA  2022-02-28 Simplify reuse specs; add function ObjCSV_BuildReuseField, reuse fields support to ObjCSV_Collection2CSV
+and ObjCSV_Collection2Fixed (reuse fields are not supported in ObjCSV_Collection2HTML and ObjCSV_Collection2XML).<br/>
+0.5.11 BETA  2022-02-24 Add reuse fields support to ObjCSV_CSV2Collection and ObjCSV_ReturnDSVObjectArray; reverse changes in
+ObjCSV_Collection2CSV now covered by ObjCSV_ReturnDSVObjectArray.<br/>
+0.5.10 BETA  2022-02-09 In ObjCSV_Collection2CSV, add strReuseDelimiters parameter allowing to specify to copy or combine
+existing fields in strFieldOrder.<br/>
+0.5.9  2017-07-20 In ObjCSV_CSV2Collection, reverse change in v0.4.1 to import non-standard CSV files created by XL causing issue
+(stripping &quot;=&quot;) in encapsulated fields with containing &quot;...=&quot;&quot;...&quot;<br/>
 0.5.8  2016-12-22 In ObjCSV_CSV2Collection, fix bug when creating &quot;C&quot; names header if blnHeader is false (0) and strFieldNames is empty.<br/>
-0.5.7  2016-12-20  In ObjCSV_CSV2Collection, if blnHeader is false (0) and strFieldNames is empty, strFieldNames returns the &quot;C&quot; field names created by the function.<br/>
+0.5.7  2016-12-20  In ObjCSV_CSV2Collection, if blnHeader is false (0) and strFieldNames is empty, strFieldNames returns the
+&quot;C&quot; field names created by the function.<br/>
 0.5.6  2016-10-20  Stop trimming data value read from CSV file. Addition of blnTrim parameter to ObjCSV_ReturnDSVObjectArray
 (true by default for backward compatibility).<br/>
 0.5.5  2016-08-28  Optional parameter strEol to ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed now empty by default.
@@ -86,6 +105,8 @@ code<br/>
   <li><a href="ObjCSV_SortCollection.html">ObjCSV_SortCollection() Function</a></li>
   <li><a href="ObjCSV_Format4CSV.html">ObjCSV_Format4CSV() Function</a></li>
   <li><a href="ObjCSV_ReturnDSVObjectArray.html">ObjCSV_ReturnDSVObjectArray() Function</a></li>
+  <li><a href="ObjCSV_BuildMergeField.html">ObjCSV_BuildMergeField() Function</a></li>
+  <li><a href="ObjCSV_MergeSpecsError.html">ObjCSV_MergeSpecsError() Function</a></li>
 </ul>
 
 </body>

@@ -1,0 +1,49 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>ObjCSV_BuildMergeField()</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="default.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<h1>ObjCSV_BuildMergeField()</h1>
+<p>Returns the content of a field copying or combining fields from the existing record from objLine in new field.</p>
+
+<pre class="Syntax">ObjCSV_BuildMergeField(strMergeDelimiters, strMergeSpecs, objLine, objHeader, ByRef strNewFieldName)</pre>
+<h3>Parameters</h4>
+<table class="info">
+<tr>
+  <td width="15%">strMergeDelimiters</td>
+  <td width="85%">The first character of strMergeDelimiters delimits the begining of a merge field or a section of the merge field and the second character is the closing delimiter.</td>
+</tr>
+<tr>
+  <td width="15%">strMergeSpecs</td>
+  <td width="85%">String including the name and format of the merge field and the name of the new field. See remark.</td>
+</tr>
+<tr>
+  <td width="15%">objLine</td>
+  <td width="85%">Single array containing the values that can be merged</td>
+</tr>
+<tr>
+  <td width="15%">intRowNumber</td>
+  <td width="85%">Integer value, current line number (used to replace ROWNUMBER placeholder)</td>
+</tr>
+<tr>
+  <td width="15%">strNewFieldName</td>
+  <td width="85%">(ByRef) New merged field name</td>
+</tr>
+</table>
+<h3>Returns</h3>
+<p>This function returns the new field data in a string. The ByRef parameter strNewFieldName returns the name of the new field.</p>
+<h3>Remarks</h3>
+<p>The delimiters are used for a whole merge field and in two internal sections: for example with delimiters &quot;[]&quot;, &quot;[[format][name]]&quot;.
+1) The first internal section &quot;[format]&quot; specify the format of the new field with insertion of merged fields by specifying their name between merge delimiters, for example &quot;[[field3] ... [field1]]&quot;. This section may also include the ROPWNUMBER placeholder, for example &quot;#[ROWNUMBER]&quot;)
+2) The second section &quot;[name]&quot; specify the name of the new field, assumed to be unique in objLine.
+Fields included in a merged field must appear in objLine.
+If the merge specs include strFieldDelimiter, the whole reuse field must be enclosed with strEncapsulator.
+For example: &quot;[Name: [FirstName] [LastName] ([City])][Name and city]&quot; would reuse the three existing fields (for example &quot;Presley,Elvis,Memphis&quot;) to create a new field named &quot;Name and city&quot; containing &quot;Elvis Presley (Memphis)&quot;.</p>
+
+</body>
+</html>
