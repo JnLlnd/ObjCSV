@@ -1,9 +1,10 @@
 /*!
 	Library: ObjCSV Library
-		AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the
+		AutoHotkey v1.1 (AHK) functions to load from CSV files, sort, display and save collections of records using the
 		Object data type.  
 		  
 		* Read and save files in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.).
+		* Merge existing fields in a new field
 		* Display, edit and read Collections in GUI ListView objects.
 		* Export Collection to fixed-width, HTML or XML files.
 		  
@@ -11,13 +12,14 @@
 		[http://en.wikipedia.org/wiki/Comma-separated_values](http://en.wikipedia.org/wiki/Comma-separated_values).  
 		  
 		Written by Jean Lalonde ([JnLlnd](http://www.autohotkey.com/board/user/4880-jnllnd/) on AHK forum) using
-		AutoHotkey_L v1.1.09.03+ ([http://l.autohotkey.net/](http://l.autohotkey.net/))  
+		AutoHotkey_L v1.1+ ([http://www.autohotkey.com/](http://www.autohotkey.com/))  
 		  
 		### ONLINE MATERIAL
 		* [Home of this library is on GitHub](https://github.com/JnLlnd/ObjCSV)
 		* [The most up-to-date version of this AHK file on GitHub](https://raw.github.com/JnLlnd/ObjCSV/master/Lib/ObjCSV.ahk)
 		* [Online ObjCSV Library Help](http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/)
 		* [Topic about this library on AutoHotkey forum](https://www.autohotkey.com/boards/viewtopic.php?t=41)
+		* [Example of an application using ObjCSV: CSV Buddy](https://github.com/JnLlnd/CSVBuddy)
 		  
 		### INSTRUCTIONS
 			Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:
@@ -28,9 +30,14 @@
 			You can use the functions in this library by calling ObjCSV_FunctionName (no #Include required)
 		  
 		### VERSIONS HISTORY
-			0.5.15 BETA  2022-04-15 Support merged field when passing merge specs in strFieldNames instead of the file header
-			0.5.14 BETA  2022-04-04 Rename functions, parameters and variables from "reuse" to "merge": ObjCSV_MergeSpecsError, ObjCSV_BuildMergeField. Remove unused parameter objHeader from ObjCSV_BuildMergeField.
-			0.5.13 BETA  2022-03-28 add function ObjCSV_ReuseSpecsError to validate reuse specs syntax, return ErrorLevel if error in
+			1.0.00 2022-07-18  (summary of changes in beta v0.5.10 to v0.5.15) New function ObjCSV_BuildMergeField allowing to copy
+			or combine existing fields in a new field; new function ObjCSV_MergeSpecsError to validate merge specs syntax;
+			merge fields support in ObjCSV_Collection2CSV, ObjCSV_CSV2Collection and ObjCSV_ReturnDSVObjectArray;
+			support merged specs in file header and in strFieldNames. Note: changes in v1.0.00 are backward compatible.  
+			0.5.15 BETA  2022-04-15 Support merged field when passing merge specs in strFieldNames instead of the file header.  
+			0.5.14 BETA  2022-04-04 Rename functions, parameters and variables from "reuse" to "merge": ObjCSV_MergeSpecsError,
+			ObjCSV_BuildMergeField. Remove unused parameter objHeader from ObjCSV_BuildMergeField.  
+			0.5.13 BETA  2022-03-28 Add function ObjCSV_ReuseSpecsError to validate reuse specs syntax, return ErrorLevel if error in
 			ObjCSV_Collection2CSV and ObjCSV_Collection2Fixed, add row number parameter to ObjCSV_BuildReuseField for placeholder ROWNUMBER.  
 			0.5.12 BETA  2022-02-28 Simplify reuse specs; add function ObjCSV_BuildReuseField, reuse fields support to ObjCSV_Collection2CSV
 			and ObjCSV_Collection2Fixed (reuse fields are not supported in ObjCSV_Collection2HTML and ObjCSV_Collection2XML).  
@@ -80,7 +87,7 @@
 			0.1.1  2013-08-26  First release  
 
 	Author: Jean Lalonde
-	Version: v0.5.15 BETA (2022-04-15)
+	Version: v1.0.00 (2022-07-18)
 */
 
 
@@ -88,7 +95,7 @@
 ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames, blnHeader := 1, blnMultiline := 1, intProgressType := 0
 	, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := "", strProgressText := "", ByRef strFileEncoding := "", strMergeDelimiters := "")
 /*!
-	Function: ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText := "", ByRef strFileEncoding := ""])
+	Function: ObjCSV_CSV2Collection(strFilePath, ByRef strFieldNames [, blnHeader = 1, blnMultiline = 1, intProgressType = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText := "", ByRef strFileEncoding := "", strMergeDelimiters := ""])
 		Transfer the content of a CSV file to a collection of objects. Field names are taken from the first line of
 		the file or from the strFieldNameReplacement parameter. If taken from the file, fields names are returned by
 		the ByRef variable strFieldNames. Delimiters are configurable.
@@ -401,7 +408,7 @@ ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth, blnHeader := 0, st
 	, blnOverwrite := 0, strFieldDelimiter := ",", strEncapsulator := """", strEolReplacement := ""
 	, strProgressText := "", strFileEncoding := "", strEol := "", strMergeDelimiters := "")
 /*!
-	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", strEol := ""])
+	Function: ObjCSV_Collection2Fixed(objCollection, strFilePath, strWidth [, blnHeader = 0, strFieldOrder = "", intProgressType = 0, blnOverwrite = 0, strFieldDelimiter = ",", strEncapsulator = """", strEolReplacement = "", strProgressText = "", strFileEncoding := "", strEol := "", strMergeDelimiters := ""])
 		Transfer the selected fields from a collection of objects to a fixed-width file. Field names taken from key names are optionnaly included the file. Width are determined by the delimited string strWidth. Field names and data fields shorter than their width are padded with trailing spaces. Field names and data fields longer than their width are truncated at their maximal width.
 
 	Parameters:
@@ -988,7 +995,7 @@ ObjCSV_SortCollection(objCollection, strSortFields, strSortOptions := "", intPro
 ;================================================
 ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """", blnAlwaysEncapsulate := 0)
 /*!
-	Function: ObjCSV_Format4CSV(strF4C [, strFieldDelimiter = ",", strEncapsulator = """"], blnAlwaysEncapsulate := 0)
+	Function: ObjCSV_Format4CSV(strF4C [, strFieldDelimiter = ",", strEncapsulator = """", blnAlwaysEncapsulate := 0])
 		Add encapsulator before and after strF4C if the string includes line breaks, field delimiter or field encapsulator. Encapsulated field encapsulators are doubled.
 		  
 	Parameters:
@@ -1039,7 +1046,7 @@ ObjCSV_Format4CSV(strF4C, strFieldDelimiter := ",", strEncapsulator := """", bln
 ;================================================
 ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter := ",", strEncapsulator := """", blnTrim := true, strMergeDelimiters := "")
 /*!
-	Function: ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine, strDelimiter = ",", strEncapsulator = """", blnTrim := true)
+	Function: ObjCSV_ReturnDSVObjectArray(strCurrentDSVLine [, strDelimiter = ",", strEncapsulator = """", blnTrim := true, strMergeDelimiters := ""])
 		Returns an object array from a delimiter-separated string.
 		  
 	Parameters:
@@ -1126,7 +1133,7 @@ ObjCSV_BuildMergeField(strMergeDelimiters, strMergeSpecs, objLine, intRowNumber,
 	
 	Parameters:
 		strMergeDelimiters - The first character of strMergeDelimiters delimits the begining of a merge field or a section of the merge field and the second character is the closing delimiter.
-		strMergeSpecs - String including the name and format of the merge field and the name of the new field.
+		strMergeSpecs - String including the name and format of the merge field and the name of the new field. See remark.
 		objLine - Single array containing the values that can be merged
 		intRowNumber - Integer value, current line number (used to replace ROWNUMBER placeholder)
 		strNewFieldName - (ByRef) New merged field name
