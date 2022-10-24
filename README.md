@@ -1,15 +1,16 @@
 # ObjCSV Library
 ##Library to load and save CSV files to/from objects and ListView
 
-Written using AutoHotkey_L v1.1.09.03+ (http://l.autohotkey.net/)
+Written using AutoHotkey v1 (http://www.autohotkey.com)
 By JnLlnd on AHK forum
 Library home on GitHub [https://github.com/JnLlnd/ObjCSV](https://github.com/JnLlnd/ObjCSV)
-2013-08-22+, last update (v0.5.1): 2016-06-06
+2013-08-22+, last update (v1.0): 2022-07-18
 
-AutoHotkey_L (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type
+AutoHotkey (AHK) functions to load from CSV files, sort, display and save collections of records using the Object data type
 * Read and save files in any delimited format (CSV, semi-colon, tab delimited, single-line or multi-line, etc.).
 * Display, edit and read Collections in GUI ListView objects.
 * Export Collection to fixed-width, HTML or XML files.
+* Merge existing fields or create new fields
 * Read and save files supporting the following file encoding: ANSI (default), UTF-8, UTF-16, UTF-8-RAW, UTF-16-RAW or CPnnnn (nnnn being a code page numeric identifier), new in v0.5
 
 For more info on CSV files, see [http://en.wikipedia.org/wiki/Comma-separated_values](http://en.wikipedia.org/wiki/Comma-separated_values).  
@@ -22,6 +23,7 @@ Even if you don't know much about AHK objects, simply using these functions will
 Other usages:
 * Load a file to object to run any scripted manipulation on the content of the file with the ease and safety of AHK objets.
 * Add/change CSV header names, change the order of fields or remove fields in a CSV file programatically.
+* Concatenate existing fields into a new field
 * Display the file content in a ListView for further viewing or editing (multiple Gui and ListView controls are supported).
 * Sort the data on any field combination before loading to the ListView or saving to a CSV file.
 * Save all or selected rows of a ListView to a CSV file.
@@ -35,7 +37,7 @@ INSTRUCTIONS
 Copy this script in a file named ObjCSV.ahk and save this file in one of these \Lib folders:
   * %A_ScriptDir%\Lib\
   * %A_MyDocuments%\AutoHotkey\Lib\
-  * [path to the currently running AutoHotkey_L.exe]\Lib\
+  * [path to the currently running AutoHotkey.exe]\Lib\
 
 You can use the functions in this library by calling ObjCSV_FunctionName. No #Include required!
 
@@ -43,7 +45,7 @@ You can use the functions in this library by calling ObjCSV_FunctionName. No #In
 DOCUMENTATION, DISCUSSION AND TUTORIAL
 
 Library documentation:  
-http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/ (updated to v0.5)
+http://code.jeanlalonde.ca/ahk/ObjCSV/ObjCSV-doc/ (updated to v1.0)
 
 A discussion on this library and tutorials can be found on the AutoHotkey forum:  
 https://www.autohotkey.com/boards/viewtopic.php?t=41  
